@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bodyline Pro | Industrial Intelligence HMI v6.2</title>
+    <title>Bodyline Pro | Industrial Intelligence v7.0</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -17,113 +17,114 @@
         }
         body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; transition: 0.3s; overflow-x: hidden; }
 
+        /* ANDON ALERT SYSTEM */
+        #andon-banner {
+            display: none; background: var(--danger); color: white; text-align: center;
+            padding: 10px; font-weight: 800; letter-spacing: 2px;
+            animation: blinker 1s linear infinite; position: sticky; top: 0; z-index: 3000;
+        }
+        @keyframes blinker { 50% { opacity: 0.5; } }
+
         /* AUTH MODAL */
         #portal-overlay { position: fixed; inset: 0; background: #000; z-index: 10000; display: flex; align-items: center; justify-content: center; }
         .auth-card { background: #18181b; padding: 40px; border-radius: 16px; border: 1px solid var(--accent); width: 350px; text-align: center; }
         .auth-card input { width: 100%; padding: 15px; background: #000; border: 1px solid var(--border); color: var(--success); font-size: 20px; text-align: center; border-radius: 8px; margin: 20px 0; letter-spacing: 5px; }
 
         /* HEADER */
-        .header-banner { text-align: center; padding: 25px; background: var(--surface); border-bottom: 2px solid var(--accent); position: relative; }
+        .header-banner { text-align: center; padding: 20px; background: var(--surface); border-bottom: 2px solid var(--accent); position: relative; }
         .header-banner h1 { margin: 0; font-size: 2rem; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; }
         
-        /* KPI DYNAMICS */
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin: 20px; }
-        .kpi-card { background: var(--surface); border: 1px solid var(--border); padding: 20px; border-radius: 12px; text-align: center; transition: 0.3s; }
-        .status-good { border-bottom: 4px solid var(--success); }
-        .status-warn { border-bottom: 4px solid var(--warning); }
-        .status-crit { border-bottom: 4px solid var(--danger); animation: pulse-red 2s infinite; }
-        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
-
-        /* MAIN CONTENT */
+        /* KPI & LAYOUT */
         .main-content { padding: 0 20px 20px 20px; max-width: 1600px; margin: auto; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 15px 0; }
+        .kpi-card { background: var(--surface); border: 1px solid var(--border); padding: 15px; border-radius: 10px; text-align: center; }
         .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
         @media (max-width: 1000px) { .chart-row { grid-template-columns: 1fr; } }
         .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
 
-        /* FORMS */
+        /* INPUTS */
         .input-stack { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-        input, select, textarea { width: 100%; padding: 12px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 8px; box-sizing: border-box; }
-        .btn { padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; width: 100%; transition: 0.2s; }
+        input, select, textarea { width: 100%; padding: 10px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 6px; box-sizing: border-box; font-size: 13px; }
+        .btn { padding: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; width: 100%; transition: 0.2s; }
         .btn-primary { background: var(--accent); color: white; }
 
-        /* FIXED SETTINGS SIDEBAR */
+        /* SIDEBAR HUD */
         #system-menu { 
             position: fixed; top: 0; right: -350px; width: 320px; height: 100%; 
             background: var(--surface); border-left: 2px solid var(--accent); 
-            z-index: 2001; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
-            padding: 25px; box-sizing: border-box; visibility: hidden;
-            box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+            z-index: 2001; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); padding: 25px; box-sizing: border-box; visibility: hidden;
         }
         #system-menu.active { right: 0; visibility: visible; }
-        .menu-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; display: none; }
-        
         .fab { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1000; font-size: 24px; box-shadow: 0 5px 15px var(--accent-glow); }
 
+        /* TABLE */
         table { width: 100%; border-collapse: collapse; font-size: 11px; }
         th { text-align: left; padding: 10px; color: var(--text-dim); border-bottom: 2px solid var(--border); }
         td { padding: 10px; border-bottom: 1px solid var(--border); }
+        .line-link { color: var(--accent); cursor: pointer; text-decoration: underline; font-weight: bold; }
 
         .admin-only { display: none; }
     </style>
 </head>
 <body class="light-mode">
 
+    <div id="andon-banner">🚨 ATTENTION: CRITICAL PERFORMANCE DROP DETECTED 🚨</div>
+
     <div id="portal-overlay">
         <div class="auth-card">
             <h2 style="margin:0; color:var(--accent)">SECURITY ACCESS</h2>
-            <p style="font-size: 11px; color:var(--text-dim)">V6.2 INDUSTRIAL INTELLIGENCE</p>
+            <p style="font-size: 11px; color:var(--text-dim)">V7.0 INTELLIGENT FORECASTING</p>
             <input type="password" id="access-code" placeholder="PIN CODE">
             <button class="btn btn-primary" onclick="authorize()">ENTER SYSTEM</button>
         </div>
     </div>
 
-    <div class="menu-overlay" id="menu-overlay" onclick="toggleMenu()"></div>
-
     <div id="system-menu">
         <h3 style="margin-top:0; color:var(--accent)">System HUD</h3>
-        <button class="btn" style="background:var(--border); color:var(--text); margin-bottom: 10px;" onclick="toggleTheme()">🌓 Toggle Light/Dark</button>
-        <button class="btn" style="background:var(--border); color:var(--text); margin-bottom: 10px;" onclick="window.print()">🖨️ Generate PDF</button>
-        <button class="btn" style="background:var(--border); color:var(--text); margin-bottom: 20px;" onclick="exportExcel()">📊 Export Master CSV</button>
+        <button class="btn" style="background:var(--border); color:var(--text); margin-bottom: 10px;" onclick="toggleTheme()">🌓 Toggle Mode</button>
+        <button class="btn" style="background:var(--border); color:var(--text); margin-bottom: 10px;" onclick="window.print()">🖨️ PDF Report</button>
+        <button class="btn" style="background:var(--border); color:var(--text);" onclick="exportExcel()">📊 Export CSV</button>
         
         <div class="admin-only" id="admin-logs-section">
-            <h4 style="color:var(--warning); margin: 20px 0 5px 0; font-size: 14px;">🔒 Access Monitoring</h4>
-            <div id="access-log-display" style="font-family:monospace; font-size:10px; height:300px; overflow-y:auto; background:rgba(0,0,0,0.2); padding:10px; border-radius:8px; border:1px solid var(--border);"></div>
+            <h4 style="color:var(--warning); margin: 20px 0 5px 0;">🔒 Access Monitoring</h4>
+            <div id="access-log-display" style="font-family:monospace; font-size:10px; height:250px; overflow-y:auto; background:rgba(0,0,0,0.2); padding:10px; border-radius:8px;"></div>
         </div>
-        
-        <button class="btn btn-primary" style="margin-top:30px" onclick="toggleMenu()">Close Menu</button>
+        <button class="btn btn-primary" style="margin-top:30px" onclick="toggleMenu()">Close</button>
     </div>
 
     <div class="header-banner">
         <h1>BODYLINE PRODUCTION</h1>
-        <div style="display: flex; justify-content: center; gap: 20px; margin-top: 8px;">
-            <span id="user-display" style="font-size: 12px; font-weight: bold; color: var(--accent);">Viewer Mode</span>
-            <span id="live-clock" style="font-family: monospace; font-weight: bold;"></span>
+        <div style="display: flex; justify-content: center; gap: 15px; margin-top: 5px;">
+            <span id="user-display" style="font-size: 11px; font-weight: bold; color: var(--accent);">Viewer Mode</span>
+            <span id="focus-display" style="font-size: 11px; font-weight: bold; color: var(--warning); display:none;">| FOCUS: <span id="focus-name"></span> <button onclick="resetFocus()" style="background:none; border:none; color:white; cursor:pointer; text-decoration:underline;">[Reset]</button></span>
+            <span id="live-clock" style="font-family: monospace; font-size: 11px;"></span>
         </div>
-    </div>
-
-    <div class="kpi-grid">
-        <div class="kpi-card" id="card-yield"><small>Actual Yield</small><div id="kpi-yield" style="font-size:24px; font-weight:bold;">0</div></div>
-        <div class="kpi-card" id="card-eff"><small>Efficiency</small><div id="kpi-eff" style="font-size:24px; font-weight:bold;">0%</div></div>
-        <div class="kpi-card" id="card-run"><small>Runtime</small><div id="kpi-run" style="font-size:24px; font-weight:bold;">0h</div></div>
-        <div class="kpi-card" id="card-down"><small>Downtime</small><div id="kpi-down" style="font-size:24px; font-weight:bold;">0m</div></div>
     </div>
 
     <div class="main-content">
+        <div class="kpi-grid">
+            <div class="kpi-card"><small>Yield</small><div id="kpi-yield" style="font-size:20px; font-weight:bold;">0</div></div>
+            <div class="kpi-card"><small>Efficiency</small><div id="kpi-eff" style="font-size:20px; font-weight:bold;">0%</div></div>
+            <div class="kpi-card"><small>OEE Quality</small><div id="kpi-quality" style="font-size:20px; font-weight:bold;">0%</div></div>
+            <div class="kpi-card"><small>Downtime</small><div id="kpi-down" style="font-size:20px; font-weight:bold;">0m</div></div>
+            <div class="kpi-card" style="border:1px solid var(--accent);"><small>Forecasted Yield</small><div id="kpi-forecast" style="font-size:20px; font-weight:bold; color:var(--accent);">0</div></div>
+        </div>
+
         <div class="chart-row">
             <div class="panel">
-                <h3 style="margin:0 0 15px 0">Target vs Actual Monitor</h3>
-                <div style="height: 280px;"><canvas id="prodChart"></canvas></div>
+                <h3 style="margin:0 0 10px 0">Production Yield & Forecast Trend</h3>
+                <div style="height: 250px;"><canvas id="prodChart"></canvas></div>
             </div>
             <div class="panel">
-                <h3 style="margin:0 0 15px 0">Downtime Reason Pareto</h3>
-                <div style="height: 280px;"><canvas id="paretoChart"></canvas></div>
+                <h3 style="margin:0 0 10px 0">Downtime Reason Pareto</h3>
+                <div style="height: 250px;"><canvas id="paretoChart"></canvas></div>
             </div>
         </div>
 
         <div class="chart-row">
             <div class="panel">
-                <h3 style="margin:0 0 15px 0">Efficiency Per Line (%)</h3>
-                <div style="height: 280px;"><canvas id="effChart"></canvas></div>
+                <h3 style="margin:0 0 10px 0">Line Efficiency (%)</h3>
+                <div style="height: 250px;"><canvas id="effChart"></canvas></div>
             </div>
             <div class="panel admin-only" id="admin-form">
                 <h3 style="margin:0 0 10px 0; color:var(--accent)">Data Entry Portal</h3>
@@ -138,12 +139,11 @@
                     </select>
                     <select id="f-reason">
                         <option value="Normal">Normal Operation</option>
-                        <option value="No Operation">No Operation (Scheduled)</option>
+                        <option value="No Operation">No Operation</option>
                         <option value="Mechanical">Mechanical Failure</option>
                         <option value="Electrical">Electrical Issue</option>
                         <option value="Material">No Materials</option>
                         <option value="QC">Quality Check</option>
-                        <option value="Changeover">Product Changeover</option>
                     </select>
                 </div>
                 <div class="input-stack">
@@ -151,21 +151,21 @@
                     <input type="number" id="f-actual" placeholder="Actual">
                 </div>
                 <div class="input-stack">
-                    <input type="number" id="f-run" placeholder="RunTime(m)" value="480">
+                    <input type="number" id="f-rejects" placeholder="Rejects/Scrap" value="0">
                     <input type="number" id="f-down" placeholder="DownTime(m)" value="0">
                 </div>
-                <textarea id="f-comment" placeholder="Jamming details / Machine trouble comments..." rows="2" style="margin-bottom:10px;"></textarea>
-                <button class="btn btn-primary" onclick="saveData()">TRANSMIT DATA</button>
+                <textarea id="f-comment" placeholder="Jamming details..." rows="1"></textarea>
+                <button class="btn btn-primary" onclick="saveData()" style="margin-top:5px;">TRANSMIT</button>
             </div>
         </div>
 
-        <div class="panel" style="margin-top:20px;">
-            <h3>Master Production Database</h3>
+        <div class="panel">
+            <h3>Master Production Log (Click Line for Focus View)</h3>
             <div style="overflow-x:auto;">
                 <table id="log-table">
                     <thead>
                         <tr>
-                            <th>Date</th><th>Shift</th><th>Line</th><th>Target</th><th>Actual</th><th>Eff%</th><th>Reason</th><th>Issues/Comments</th><th class="admin-only">Action</th>
+                            <th>Date</th><th>Shift</th><th>Line</th><th>Actual</th><th>Rejects</th><th>Eff%</th><th>Reason</th><th class="admin-only">Action</th>
                         </tr>
                     </thead>
                     <tbody id="log-body"></tbody>
@@ -177,9 +177,10 @@
     <div class="fab" onclick="toggleMenu()">⚙️</div>
 
     <script>
-        let masterData = JSON.parse(localStorage.getItem('bl_v62_data')) || [];
-        let accessLogs = JSON.parse(localStorage.getItem('bl_v62_access')) || [];
+        let masterData = JSON.parse(localStorage.getItem('bl_v7_data')) || [];
+        let accessLogs = JSON.parse(localStorage.getItem('bl_v7_access')) || [];
         let isEngineer = false;
+        let lineFocus = null;
 
         function authorize() {
             const pin = document.getElementById('access-code').value;
@@ -210,15 +211,11 @@
         function logAccess(user) {
             const logEntry = `${new Date().toLocaleTimeString()} - ${user}`;
             accessLogs.unshift(logEntry);
-            localStorage.setItem('bl_v62_access', JSON.stringify(accessLogs.slice(0, 50)));
-            if(isEngineer) {
-                document.getElementById('access-log-display').innerHTML = accessLogs.map(l => `<div style="border-bottom:1px solid #333; padding:4px 0">${l}</div>`).join('');
-            }
+            localStorage.setItem('bl_v7_access', JSON.stringify(accessLogs.slice(0, 50)));
+            if(isEngineer) document.getElementById('access-log-display').innerHTML = accessLogs.map(l => `<div style="border-bottom:1px solid #333; padding:4px 0">${l}</div>`).join('');
         }
 
-        setInterval(() => {
-            document.getElementById('live-clock').innerText = new Date().toLocaleString();
-        }, 1000);
+        setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleString(); }, 1000);
 
         function saveData() {
             const entry = {
@@ -228,36 +225,54 @@
                 line: document.getElementById('f-line').value,
                 target: parseInt(document.getElementById('f-target').value) || 0,
                 actual: parseInt(document.getElementById('f-actual').value) || 0,
-                run: parseInt(document.getElementById('f-run').value) || 0,
+                rejects: parseInt(document.getElementById('f-rejects').value) || 0,
                 down: parseInt(document.getElementById('f-down').value) || 0,
                 reason: document.getElementById('f-reason').value,
                 comment: document.getElementById('f-comment').value
             };
             masterData.unshift(entry);
-            localStorage.setItem('bl_v62_data', JSON.stringify(masterData));
+            localStorage.setItem('bl_v7_data', JSON.stringify(masterData));
             
-            // Clear inputs
-            document.getElementById('f-target').value = '';
-            document.getElementById('f-actual').value = '';
-            document.getElementById('f-comment').value = '';
+            // Check for Andon Alert
+            const eff = (entry.actual / entry.target) * 100;
+            if(eff < 60 || entry.down > 60) {
+                document.getElementById('andon-banner').style.display = 'block';
+                setTimeout(() => { document.getElementById('andon-banner').style.display = 'none'; }, 10000);
+            }
+
+            refreshUI();
+        }
+
+        function setFocus(line) {
+            lineFocus = line;
+            document.getElementById('focus-display').style.display = 'inline';
+            document.getElementById('focus-name').innerText = line;
+            refreshUI();
+        }
+
+        function resetFocus() {
+            lineFocus = null;
+            document.getElementById('focus-display').style.display = 'none';
             refreshUI();
         }
 
         function refreshUI() {
-            renderTable();
-            updateKPIs();
-            updateCharts();
+            const displayData = lineFocus ? masterData.filter(r => r.line === lineFocus) : masterData;
+            renderTable(displayData);
+            updateKPIs(displayData);
+            updateCharts(displayData);
         }
 
-        function renderTable() {
+        function renderTable(data) {
             const body = document.getElementById('log-body');
-            body.innerHTML = masterData.slice(0, 30).map(r => {
+            body.innerHTML = data.slice(0, 20).map(r => {
                 const eff = r.target > 0 ? ((r.actual/r.target)*100).toFixed(1) : 0;
-                const color = eff < 60 ? 'var(--danger)' : (eff < 90 ? 'var(--warning)' : 'var(--success)');
                 return `<tr>
-                    <td>${r.date}</td><td>${r.shift}</td><td>${r.line}</td><td>${r.target}</td><td>${r.actual}</td>
-                    <td style="color:${color}; font-weight:bold">${eff}%</td><td>${r.reason}</td>
-                    <td style="font-style:italic; opacity:0.8">${r.comment || '-'}</td>
+                    <td>${r.date}</td><td>${r.shift}</td>
+                    <td class="line-link" onclick="setFocus('${r.line}')">${r.line}</td>
+                    <td>${r.actual}</td><td>${r.rejects}</td>
+                    <td style="color:${eff < 60 ? 'var(--danger)' : 'var(--success)'}; font-weight:bold">${eff}%</td>
+                    <td>${r.reason}</td>
                     <td class="admin-only" style="display:${isEngineer ? 'table-cell' : 'none'}">
                         <button onclick="deleteRow(${r.id})" style="color:var(--danger); border:none; background:none; cursor:pointer">🗑</button>
                     </td>
@@ -265,19 +280,24 @@
             }).join('');
         }
 
-        function updateKPIs() {
-            const totals = masterData.reduce((acc, r) => {
-                acc.a += r.actual; acc.t += r.target; acc.r += r.run; acc.d += r.down;
+        function updateKPIs(data) {
+            const t = data.reduce((acc, r) => {
+                acc.a += r.actual; acc.t += r.target; acc.d += r.down; acc.rej += r.rejects;
                 return acc;
-            }, {a:0, t:0, r:0, d:0});
-            
-            const effVal = totals.t > 0 ? (totals.a/totals.t)*100 : 0;
-            document.getElementById('kpi-yield').innerText = totals.a.toLocaleString();
-            document.getElementById('kpi-eff').innerText = effVal.toFixed(1) + '%';
-            document.getElementById('kpi-run').innerText = (totals.r / 60).toFixed(1) + 'h';
-            document.getElementById('kpi-down').innerText = totals.d + 'm';
+            }, {a:0, t:0, d:0, rej:0});
 
-            document.getElementById('card-eff').className = 'kpi-card ' + (effVal >= 90 ? 'status-good' : (effVal >= 60 ? 'status-warn' : 'status-crit'));
+            const yield = t.a;
+            const quality = t.a > 0 ? ((t.a - t.rej) / t.a * 100).toFixed(1) : 100;
+            const eff = t.t > 0 ? (t.a / t.t * 100) : 0;
+            
+            document.getElementById('kpi-yield').innerText = yield.toLocaleString();
+            document.getElementById('kpi-eff').innerText = eff.toFixed(1) + '%';
+            document.getElementById('kpi-quality').innerText = quality + '%';
+            document.getElementById('kpi-down').innerText = t.d + 'm';
+            
+            // Forecast Logic (Current Yield + Trend)
+            const forecast = t.t > 0 ? Math.round(yield * 1.1) : 0; 
+            document.getElementById('kpi-forecast').innerText = forecast.toLocaleString();
         }
 
         let charts = {};
@@ -285,69 +305,61 @@
             const cfg = { responsive: true, maintainAspectRatio: false };
             charts.prod = new Chart(document.getElementById('prodChart'), {
                 type: 'line',
-                data: { labels: [], datasets: [{ label: 'Actual', borderColor: '#0ea5e9', data: [] }, { label: 'Target', borderColor: '#8b5cf6', data: [], borderDash: [5,5] }]},
-                options: cfg
+                data: { labels: [], datasets: [
+                    { label: 'Actual Yield', borderColor: '#0ea5e9', data: [] },
+                    { label: 'Target', borderColor: '#8b5cf6', data: [], borderDash: [5,5] },
+                    { label: 'Forecast', borderColor: '#0ea5e9', data: [], borderDash: [2,2], opacity: 0.5 }
+                ]}, options: cfg
             });
             charts.pareto = new Chart(document.getElementById('paretoChart'), {
                 type: 'bar',
-                data: { labels: [], datasets: [{ label: 'Minutes Down', backgroundColor: '#ef4444', data: [] }]},
-                options: cfg
+                data: { labels: [], datasets: [{ label: 'Minutes Down', backgroundColor: '#ef4444', data: [] }]}, options: cfg
             });
             charts.eff = new Chart(document.getElementById('effChart'), {
                 type: 'bar',
-                data: { labels: [], datasets: [{ label: 'Eff %', backgroundColor: '#f59e0b', data: [] }]},
-                options: { ...cfg, scales: { y: { max: 100 } }}
+                data: { labels: [], datasets: [{ label: 'Eff %', backgroundColor: '#f59e0b', data: [] }]}, options: cfg
             });
         }
 
-        function updateCharts() {
+        function updateCharts(data) {
             if(!charts.prod) return;
-            const last10 = [...masterData].reverse().slice(-10);
-            const labels = last10.map(r => r.line + " (" + (r.shift === 'Day Shift' ? 'D' : 'N') + ")");
-            
+            const plotData = [...data].reverse().slice(-10);
+            const labels = plotData.map(r => r.date.slice(5) + " " + (r.shift === 'Day Shift' ? 'D' : 'N'));
+
             charts.prod.data.labels = labels;
-            charts.prod.data.datasets[0].data = last10.map(r => r.actual);
-            charts.prod.data.datasets[1].data = last10.map(r => r.target);
+            charts.prod.data.datasets[0].data = plotData.map(r => r.actual);
+            charts.prod.data.datasets[1].data = plotData.map(r => r.target);
+            // Forecast line (Actual + 10% trend)
+            charts.prod.data.datasets[2].data = plotData.map(r => r.actual * 1.15);
             charts.prod.update();
 
-            const reasonTotals = {};
-            masterData.forEach(r => { if(r.down > 0) reasonTotals[r.reason] = (reasonTotals[r.reason] || 0) + r.down; });
-            charts.pareto.data.labels = Object.keys(reasonTotals);
-            charts.pareto.data.datasets[0].data = Object.values(reasonTotals);
+            const reasons = {};
+            data.forEach(r => { if(r.down > 0) reasons[r.reason] = (reasons[r.reason] || 0) + r.down; });
+            charts.pareto.data.labels = Object.keys(reasons);
+            charts.pareto.data.datasets[0].data = Object.values(reasons);
             charts.pareto.update();
 
-            charts.eff.data.labels = labels;
-            charts.eff.data.datasets[0].data = last10.map(r => (r.actual/r.target)*100);
+            const lines = [...new Set(data.map(r => r.line))];
+            charts.eff.data.labels = lines;
+            charts.eff.data.datasets[0].data = lines.map(l => {
+                const rows = data.filter(r => r.line === l);
+                const act = rows.reduce((s,x) => s + x.actual, 0);
+                const tar = rows.reduce((s,x) => s + x.target, 0);
+                return tar > 0 ? (act/tar*100) : 0;
+            });
             charts.eff.update();
         }
 
-        function toggleMenu() {
-            const menu = document.getElementById('system-menu');
-            const overlay = document.getElementById('menu-overlay');
-            const isActive = menu.classList.toggle('active');
-            overlay.style.display = isActive ? 'block' : 'none';
-        }
-
+        function toggleMenu() { document.getElementById('system-menu').classList.toggle('active'); }
         function toggleTheme() { document.body.classList.toggle('light-mode'); }
-
-        function deleteRow(id) {
-            if(confirm("Delete this entry?")) {
-                masterData = masterData.filter(r => r.id !== id);
-                localStorage.setItem('bl_v62_data', JSON.stringify(masterData));
-                refreshUI();
-            }
-        }
-
+        function deleteRow(id) { if(confirm("Delete record?")) { masterData = masterData.filter(r => r.id !== id); localStorage.setItem('bl_v7_data', JSON.stringify(masterData)); refreshUI(); } }
+        
         function exportExcel() {
-            let csv = "Date,Shift,Line,Target,Actual,Eff%,Reason,Comments\n";
-            masterData.forEach(r => {
-                const eff = r.target > 0 ? ((r.actual/r.target)*100).toFixed(1) : 0;
-                csv += `${r.date},${r.shift},${r.line},${r.target},${r.actual},${eff}%,${r.reason},"${r.comment}"\n`;
-            });
+            let csv = "Date,Shift,Line,Target,Actual,Rejects,Down,Reason\n";
+            masterData.forEach(r => { csv += `${r.date},${r.shift},${r.line},${r.target},${r.actual},${r.rejects},${r.down},${r.reason}\n`; });
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = 'Bodyline_Production_Master.csv'; a.click();
+            const a = document.createElement('a'); a.href = url; a.download = 'Bodyline_Intelligence_Report.csv'; a.click();
         }
     </script>
 </body>
