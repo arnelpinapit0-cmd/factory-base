@@ -3,216 +3,295 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Production HMI | V6 Engineered</title>
+    <title>Factory Intelligence | Engr. Pinapit Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            --bg: #0b0f19; --surface: #111827; --text-primary: #f9fafb; --text-secondary: #9ca3af;
-            --border: #374151; --accent: #3b82f6; --success: #059669; --warning: #fbbf24; --danger: #ef4444;
+            --bg: #0f172a; --surface: #1e293b; --accent: #3b82f6; --text: #f8fafc;
+            --border: #334155; --success: #22c55e; --warning: #eab308; --danger: #ef4444;
         }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text-primary); margin: 0; padding: 10px; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
-        .hmi-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--accent); padding-bottom: 10px; margin-bottom: 20px; }
+        .light-mode {
+            --bg: #f1f5f9; --surface: #ffffff; --accent: #2563eb; --text: #0f172a;
+            --border: #cbd5e1;
+        }
+        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; transition: 0.3s; padding: 10px; }
         
-        /* Inputs */
-        .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
-        input { width: 100%; padding: 12px; background: #1f2937; border: 1px solid var(--border); color: white; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
-        label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 5px; text-transform: uppercase; }
+        /* GREETING MODAL */
+        #portal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
+        .portal-card { background: var(--surface); border: 2px solid var(--accent); padding: 40px; border-radius: 15px; text-align: center; max-width: 400px; width: 90%; }
+        .portal-card input { width: 100%; padding: 15px; margin: 20px 0; border-radius: 8px; border: 1px solid var(--border); background: #000; color: var(--success); text-align: center; font-size: 24px; font-family: monospace; }
+        
+        /* DASHBOARD ELEMENTS */
+        .hmi-grid { display: grid; grid-template-columns: 1fr 380px; gap: 20px; }
+        @media (max-width: 1000px) { .hmi-grid { grid-template-columns: 1fr; } }
+        
+        .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .kpi-card { background: var(--surface); border-left: 4px solid var(--accent); padding: 15px; border-radius: 8px; border: 1px solid var(--border); }
+        .kpi-card small { color: #94a3b8; font-size: 11px; text-transform: uppercase; }
+        .kpi-card div { font-size: 24px; font-weight: bold; font-family: monospace; }
 
-        /* Buttons */
-        .line-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-bottom: 15px; }
-        .line-btn { padding: 10px; background: #1f2937; border: 1px solid var(--border); color: white; cursor: pointer; border-radius: 4px; font-weight: bold; }
-        .line-btn.active { background: var(--accent); border-color: var(--accent); }
-        .btn-main { width: 100%; padding: 15px; background: var(--accent); border: none; color: white; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 16px; }
-        .btn-cancel { width: 100%; padding: 10px; background: #374151; border: none; color: white; margin-top: 10px; border-radius: 6px; cursor: pointer; display: none; }
-
-        /* Table */
-        .table-wrap { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; min-width: 600px; }
-        th { text-align: left; padding: 12px; color: var(--text-secondary); border-bottom: 2px solid var(--border); font-size: 12px; }
-        td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 14px; }
-        .btn-action { padding: 6px 12px; border-radius: 4px; border: none; font-weight: bold; cursor: pointer; font-size: 12px; }
+        .btn { padding: 12px 20px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-primary { background: var(--accent); color: white; width: 100%; }
+        .theme-toggle { background: var(--border); color: var(--text); padding: 8px 15px; border-radius: 20px; font-size: 12px; cursor: pointer; border: none; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
+        th { text-align: left; padding: 12px; border-bottom: 2px solid var(--border); color: #94a3b8; }
+        td { padding: 12px; border-bottom: 1px solid var(--border); }
+        
+        input, select, textarea { width: 100%; padding: 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: var(--text); border-radius: 5px; box-sizing: border-box; }
+        .edit-only { display: none; } /* Hidden for viewers */
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="hmi-header">
+<div id="portal-overlay">
+    <div class="portal-card">
+        <h2 style="color:var(--accent); margin:0;">SYSTEM BOOT</h2>
+        <p id="portal-clock" style="font-family: monospace; margin: 10px 0;"></p>
+        <p style="font-size: 14px; color: #94a3b8;">Identify Personnel / Enter Authorization Code</p>
+        <input type="password" id="access-code" placeholder="000000" maxlength="6">
+        <button class="btn btn-primary" onclick="authorize()">INITIALIZE DASHBOARD</button>
+    </div>
+</div>
+
+<div class="container" style="display:none;" id="main-ui">
+    <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
         <div>
-            <h2 id="greet" style="margin:0;">System Initializing...</h2>
-            <small id="clock" style="color:var(--accent); font-weight:bold;"></small>
+            <h1 id="user-greeting" style="margin:0; font-size: 20px;">Welcome</h1>
+            <small id="live-time" style="color:var(--accent); font-weight:bold;"></small>
         </div>
-        <div style="text-align:right">
-            <div style="font-size:10px; color:var(--text-secondary)">DATABASE STATUS</div>
-            <div id="db-status" style="color:var(--danger)">● OFFLINE</div>
+        <button class="theme-toggle" onclick="toggleTheme()">🌓 TOGGLE AESTHETICS</button>
+    </header>
+
+    <div class="kpi-row">
+        <div class="kpi-card"><small>Total Yield</small><div id="kpi-yield">0</div></div>
+        <div class="kpi-card"><small>Avg Efficiency</small><div id="kpi-eff">0%</div></div>
+        <div class="kpi-card"><small>Total Runtime</small><div id="kpi-runtime">0h</div></div>
+        <div class="kpi-card"><small>Total Downtime</small><div id="kpi-down" style="color:var(--danger)">0m</div></div>
+    </div>
+
+    <div class="hmi-grid">
+        <div class="panel">
+            <h3 style="margin-top:0">Production Telemetry (Daily)</h3>
+            <div style="height: 300px;"><canvas id="prodChart"></canvas></div>
+        </div>
+
+        <div class="panel edit-only" id="entry-form">
+            <h3 id="form-title" style="margin-top:0; color:var(--accent);">Data Acquisition</h3>
+            <input type="hidden" id="entry-id">
+            <div style="margin-bottom:10px;">
+                <label style="font-size:11px;">Line Selection</label>
+                <select id="f-line">
+                    <option>Line 1</option><option>Line 2</option><option>Line 3</option>
+                    <option>Line 4</option><option>Line 5</option><option>Line 6</option>
+                </select>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+                <div><label style="font-size:11px;">Date</label><input type="date" id="f-date"></div>
+                <div><label style="font-size:11px;">Target</label><input type="number" id="f-target"></div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+                <div><label style="font-size:11px;">Actual</label><input type="number" id="f-actual"></div>
+                <div><label style="font-size:11px;">Run Time (Min)</label><input type="number" id="f-run" value="480"></div>
+            </div>
+            <div style="margin-bottom:10px;">
+                <label style="font-size:11px;">Downtime (Min)</label>
+                <input type="number" id="f-down" value="0">
+            </div>
+            <div style="margin-bottom:15px;">
+                <label style="font-size:11px;">Trouble/Jammed/Comments</label>
+                <textarea id="f-comment" rows="2" placeholder="Describe jamming or trouble here..."></textarea>
+            </div>
+            <button class="btn btn-primary" id="save-btn" onclick="saveData()">TRANSMIT TO CLOUD</button>
+            <button class="btn" id="cancel-btn" style="display:none; margin-top:10px; background:#475569;" onclick="cancelEdit()">CANCEL</button>
         </div>
     </div>
 
-    <div class="panel" id="form-container">
-        <h3 id="form-mode" style="margin-top:0; color:var(--accent)">DATA ACQUISITION</h3>
-        <input type="hidden" id="entry-id">
-        
-        <label>Production Line</label>
-        <div class="line-grid">
-            <button class="line-btn active" onclick="setLine('Line 1', this)">L1</button>
-            <button class="line-btn" onclick="setLine('Line 2', this)">L2</button>
-            <button class="line-btn" onclick="setLine('Line 3', this)">L3</button>
-            <button class="line-btn" onclick="setLine('Line 4', this)">L4</button>
-            <button class="line-btn" onclick="setLine('Line 5', this)">L5</button>
-            <button class="line-btn" onclick="setLine('Line 6', this)">L6</button>
-        </div>
-
-        <div class="input-grid">
-            <div><label>Date</label><input type="date" id="in-date"></div>
-            <div><label>Target</label><input type="number" id="in-target" placeholder="0"></div>
-        </div>
-        <div class="input-grid">
-            <div><label>Actual</label><input type="number" id="in-actual" placeholder="0"></div>
-            <div><label>Downtime (Min)</label><input type="number" id="in-down" value="0"></div>
-        </div>
-
-        <button class="btn-main" id="btn-submit" onclick="submitData()">TRANSMIT DATA</button>
-        <button class="btn-cancel" id="btn-cancel" onclick="resetForm()">CANCEL EDIT</button>
-    </div>
-
-    <div class="panel">
-        <h3 style="margin-top:0">PRODUCTION LOGS</h3>
-        <div class="table-wrap">
-            <table>
+    <div class="panel" style="margin-top:20px;">
+        <h3 style="margin-top:0">Master Log Database</h3>
+        <div style="overflow-x:auto;">
+            <table id="log-table">
                 <thead>
                     <tr>
-                        <th>DATE</th>
-                        <th>LINE</th>
-                        <th>TARGET</th>
-                        <th>ACTUAL</th>
-                        <th>DOWN</th>
-                        <th>ACTION</th>
+                        <th>Date</th><th>Line</th><th>Target</th><th>Actual</th><th>Eff%</th><th>Comments</th><th class="edit-only">Action</th>
                     </tr>
                 </thead>
-                <tbody id="log-table"></tbody>
+                <tbody id="log-body"></tbody>
             </table>
         </div>
     </div>
 </div>
 
 <script>
-    const CONFIG = {
-        url: "https://ywjnbslxdssyriokcdws.supabase.co",
-        key: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3am5ic2x4ZHNzeXJpb2tjZHdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDg1MDUsImV4cCI6MjA5MTIyNDUwNX0.sNFCBZoSwZS0b5eU6iBmLeTt5ru7dP8G2GYJ9hrxAFg"
-    };
+    const SB_URL = "https://ywjnbslxdssyriokcdws.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3am5ic2x4ZHNzeXJpb2tjZHdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDg1MDUsImV4cCI6MjA5MTIyNDUwNX0.sNFCBZoSwZS0b5eU6iBmLeTt5ru7dP8G2GYJ9hrxAFg";
+    const sb = supabase.createClient(SB_URL, SB_KEY);
 
-    const sb = supabase.createClient(CONFIG.url, CONFIG.key);
-    let activeLine = "Line 1";
-    let store = [];
+    let isEngineer = false;
+    let masterData = [];
+    let prodChart;
 
-    // Initialize
+    // --- INITIALIZATION ---
     window.onload = () => {
-        document.getElementById('greet').innerText = `Good Evening, Sir`;
-        document.getElementById('in-date').valueAsDate = new Date();
-        setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }, 1000);
-        refreshData();
+        const updateClock = () => {
+            const now = new Date();
+            const str = now.toLocaleDateString() + ' | ' + now.toLocaleTimeString();
+            document.getElementById('portal-clock').innerText = str;
+            document.getElementById('live-time').innerText = str;
+        };
+        setInterval(updateClock, 1000);
+        updateClock();
     };
 
-    function setLine(val, btn) {
-        activeLine = val;
-        document.querySelectorAll('.line-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-    }
-
-    async function refreshData() {
-        const { data, error } = await sb.from('production_logs').select('*').order('date', {ascending: false});
-        if(error) {
-            console.error(error);
-            return;
+    function authorize() {
+        const code = document.getElementById('access-code').value;
+        const greet = document.getElementById('user-greeting');
+        
+        if(code === "122022") {
+            isEngineer = true;
+            greet.innerText = "Welcome, Engr. Pinapit";
+            document.querySelectorAll('.edit-only').forEach(el => el.style.display = 'block');
+        } else {
+            greet.innerText = "Welcome, Sir/Ma'am (Viewer Mode)";
         }
-        store = data;
-        document.getElementById('db-status').innerText = "● ONLINE";
-        document.getElementById('db-status').style.color = "var(--success)";
-        renderTable(data);
+        
+        document.getElementById('portal-overlay').style.display = 'none';
+        document.getElementById('main-ui').style.display = 'block';
+        initChart();
+        refresh();
     }
 
-    function renderTable(data) {
-        const body = document.getElementById('log-table');
-        body.innerHTML = data.map(row => `
-            <tr>
+    function toggleTheme() {
+        document.body.classList.toggle('light-mode');
+    }
+
+    // --- DATA LOGIC ---
+    async function refresh() {
+        const { data, error } = await sb.from('production_logs').select('*').order('date', {ascending:false});
+        if(error) return console.error(error);
+        masterData = data;
+        render();
+    }
+
+    function render() {
+        const body = document.getElementById('log-body');
+        body.innerHTML = masterData.map(row => {
+            const eff = row.target > 0 ? ((row.actual / row.target) * 100).toFixed(1) : 0;
+            return `<tr>
                 <td>${row.date}</td>
-                <td style="color:var(--accent); font-weight:bold">${row.machine}</td>
+                <td style="font-weight:bold; color:var(--accent)">${row.machine}</td>
                 <td>${row.target}</td>
                 <td>${row.actual}</td>
-                <td style="color:var(--danger)">${row.downtime}m</td>
-                <td>
-                    <button class="btn-action" style="background:var(--warning); color:black" onclick="startEdit(${row.id})">EDIT</button>
-                    <button class="btn-action" style="background:var(--danger); color:white" onclick="deleteEntry(${row.id})">DEL</button>
+                <td style="color:${eff >= 95 ? 'var(--success)' : 'var(--warning)'}">${eff}%</td>
+                <td style="font-style:italic; font-size:11px;">${row.comments || '-'}</td>
+                <td class="edit-only" style="display:${isEngineer ? 'table-cell' : 'none'}">
+                    <button onclick="startEdit(${row.id})" style="background:var(--warning); border:none; border-radius:3px; padding:4px 8px; cursor:pointer;">Edit</button>
                 </td>
-            </tr>
-        `).join('');
+            </tr>`;
+        }).join('');
+
+        updateKPIs();
+        updateChart();
     }
 
-    function startEdit(id) {
-        const entry = store.find(i => i.id === id);
-        if(!entry) return alert("Record not found in local memory.");
+    function updateKPIs() {
+        const totalA = masterData.reduce((s, r) => s + r.actual, 0);
+        const totalT = masterData.reduce((s, r) => s + r.target, 0);
+        const totalR = masterData.reduce((s, r) => s + (r.run_time || 0), 0);
+        const totalD = masterData.reduce((s, r) => s + (r.downtime || 0), 0);
 
-        document.getElementById('entry-id').value = entry.id;
-        document.getElementById('in-date').value = entry.date;
-        document.getElementById('in-target').value = entry.target;
-        document.getElementById('in-actual').value = entry.actual;
-        document.getElementById('in-down').value = entry.downtime;
-        
-        // Match Line Button
-        document.querySelectorAll('.line-btn').forEach(btn => {
-            if(btn.innerText.includes(entry.machine.replace('Line ',''))) {
-                setLine(entry.machine, btn);
-            }
-        });
-
-        document.getElementById('form-mode').innerText = "EDITING RECORD #" + id;
-        document.getElementById('btn-submit').innerText = "UPDATE SYSTEM";
-        document.getElementById('btn-submit').style.background = "var(--warning)";
-        document.getElementById('btn-submit').style.color = "black";
-        document.getElementById('btn-cancel').style.display = "block";
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        document.getElementById('kpi-yield').innerText = totalA.toLocaleString();
+        document.getElementById('kpi-eff').innerText = totalT > 0 ? ((totalA/totalT)*100).toFixed(1) + '%' : '0%';
+        document.getElementById('kpi-runtime').innerText = (totalR / 60).toFixed(1) + 'h';
+        document.getElementById('kpi-down').innerText = totalD + 'm';
     }
 
-    function resetForm() {
-        document.getElementById('entry-id').value = "";
-        document.getElementById('in-target').value = "";
-        document.getElementById('in-actual').value = "";
-        document.getElementById('in-down').value = "0";
-        document.getElementById('form-mode').innerText = "DATA ACQUISITION";
-        document.getElementById('btn-submit').innerText = "TRANSMIT DATA";
-        document.getElementById('btn-submit').style.background = "var(--accent)";
-        document.getElementById('btn-submit').style.color = "white";
-        document.getElementById('btn-cancel').style.display = "none";
-    }
-
-    async function submitData() {
+    async function saveData() {
         const id = document.getElementById('entry-id').value;
         const payload = {
-            date: document.getElementById('in-date').value,
-            machine: activeLine,
-            target: parseInt(document.getElementById('in-target').value) || 0,
-            actual: parseInt(document.getElementById('in-actual').value) || 0,
-            downtime: parseInt(document.getElementById('in-down').value) || 0
+            date: document.getElementById('f-date').value,
+            machine: document.getElementById('f-line').value,
+            target: parseInt(document.getElementById('f-target').value) || 0,
+            actual: parseInt(document.getElementById('f-actual').value) || 0,
+            run_time: parseInt(document.getElementById('f-run').value) || 0,
+            downtime: parseInt(document.getElementById('f-down').value) || 0,
+            comments: document.getElementById('f-comment').value
         };
 
         if(id) {
-            const { error } = await sb.from('production_logs').update(payload).eq('id', id);
-            if(error) alert("UPDATE FAILED: " + error.message);
-            else { alert("System Updated."); resetForm(); refreshData(); }
+            await sb.from('production_logs').update(payload).eq('id', id);
+            alert("Entry Updated, Engr.");
         } else {
-            const { error } = await sb.from('production_logs').insert([payload]);
-            if(error) alert("INSERT FAILED: " + error.message);
-            else { alert("Data Transmitted."); resetForm(); refreshData(); }
+            await sb.from('production_logs').insert([payload]);
+            alert("New Entry Committed.");
         }
+        cancelEdit();
+        refresh();
     }
 
-    async function deleteEntry(id) {
-        if(!confirm("Purge record permanently?")) return;
-        const { error } = await sb.from('production_logs').delete().eq('id', id);
-        if(error) alert("DELETE FAILED: " + error.message);
-        else refreshData();
+    function startEdit(id) {
+        const row = masterData.find(r => r.id === id);
+        document.getElementById('entry-id').value = row.id;
+        document.getElementById('f-date').value = row.date;
+        document.getElementById('f-line').value = row.machine;
+        document.getElementById('f-target').value = row.target;
+        document.getElementById('f-actual').value = row.actual;
+        document.getElementById('f-run').value = row.run_time || 480;
+        document.getElementById('f-down').value = row.downtime || 0;
+        document.getElementById('f-comment').value = row.comments || "";
+        
+        document.getElementById('form-title').innerText = "Update Record #" + id;
+        document.getElementById('save-btn').innerText = "APPLY CHANGES";
+        document.getElementById('save-btn').style.background = "var(--warning)";
+        document.getElementById('save-btn').style.color = "black";
+        document.getElementById('cancel-btn').style.display = "block";
+        window.scrollTo({top:0, behavior:'smooth'});
+    }
+
+    function cancelEdit() {
+        document.getElementById('entry-id').value = "";
+        document.getElementById('f-target').value = "";
+        document.getElementById('f-actual').value = "";
+        document.getElementById('f-comment').value = "";
+        document.getElementById('form-title').innerText = "Data Acquisition";
+        document.getElementById('save-btn').innerText = "TRANSMIT TO CLOUD";
+        document.getElementById('save-btn').style.background = "var(--accent)";
+        document.getElementById('save-btn').style.color = "white";
+        document.getElementById('cancel-btn').style.display = "none";
+    }
+
+    // --- CHART LOGIC ---
+    function initChart() {
+        const ctx = document.getElementById('prodChart').getContext('2d');
+        prodChart = new Chart(ctx, {
+            type: 'line',
+            data: { labels: [], datasets: [
+                { label: 'Actual Yield', borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', data: [], fill: true, tension: 0.4 },
+                { label: 'Target', borderColor: '#94a3b8', borderDash: [5,5], data: [], fill: false }
+            ]},
+            options: { 
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: '#94a3b8' } } },
+                scales: { 
+                    x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+                    y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }
+                }
+            }
+        });
+    }
+
+    function updateChart() {
+        const sorted = [...masterData].reverse();
+        const labels = sorted.map(r => r.date);
+        const actuals = sorted.map(r => r.actual);
+        const targets = sorted.map(r => r.target);
+        
+        prodChart.data.labels = labels;
+        prodChart.data.datasets[0].data = actuals;
+        prodChart.data.datasets[1].data = targets;
+        prodChart.update();
     }
 </script>
 </body>
