@@ -2,308 +2,381 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bodyline Production | Factory Intelligence</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bodyline Production | Professional Intelligence HMI</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            --bg: #09090b; --surface: #18181b; --accent: #0ea5e9; --accent-glow: rgba(14, 165, 233, 0.5);
+            --bg: #09090b; --surface: #18181b; --accent: #0ea5e9; --accent-glow: rgba(14, 165, 233, 0.4);
             --text: #f8fafc; --text-dim: #94a3b8; --border: #27272a; 
             --success: #10b981; --warning: #f59e0b; --danger: #ef4444; --purple: #8b5cf6;
+            --sidebar-w: 300px;
         }
         .light-mode {
-            --bg: #f1f5f9; --surface: #ffffff; --accent: #2563eb; --accent-glow: rgba(37, 99, 235, 0.2);
-            --text: #0f172a; --text-dim: #64748b; --border: #cbd5e1;
+            --bg: #f8fafc; --surface: #ffffff; --accent: #2563eb; --accent-glow: rgba(37, 99, 235, 0.2);
+            --text: #0f172a; --text-dim: #64748b; --border: #e2e8f0;
         }
-        body { font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; transition: 0.3s; }
-        
-        /* AUTH MODAL */
-        #portal-overlay { position: fixed; inset: 0; background: #000; z-index: 10000; display: flex; align-items: center; justify-content: center; }
-        .portal-card { background: #18181b; border: 1px solid var(--accent); padding: 40px; border-radius: 12px; text-align: center; width: 350px; }
-        .portal-card input { width: 100%; padding: 12px; margin: 20px 0; background: #000; border: 1px solid var(--border); color: var(--success); text-align: center; font-size: 20px; letter-spacing: 4px; box-sizing: border-box; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; transition: 0.3s; overflow-x: hidden; }
 
-        /* SLIDE MENU */
-        #side-menu { position: fixed; top: 0; right: -300px; width: 280px; height: 100%; background: var(--surface); border-left: 1px solid var(--border); z-index: 999; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); padding: 30px; box-shadow: -10px 0 30px rgba(0,0,0,0.5); }
-        #side-menu.open { right: 0; }
-        .menu-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; z-index: 998; }
+        /* HUD / SIDEBAR MENU */
+        #system-menu {
+            position: fixed; top: 0; right: calc(var(--sidebar-w) * -1); width: var(--sidebar-w); height: 100%;
+            background: var(--surface); border-left: 1px solid var(--border); z-index: 2000;
+            transition: 0.5s cubic-bezier(0.16, 1, 0.3, 1); padding: 30px; box-sizing: border-box;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+        }
+        #system-menu.active { right: 0; }
+        .menu-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);
+            z-index: 1999; display: none;
+        }
+
+        /* HEADER & DASHBOARD */
+        .header-banner { 
+            text-align: center; padding: 40px 20px; background: var(--surface); 
+            border-bottom: 1px solid var(--border); position: relative;
+        }
+        .header-banner h1 { margin: 0; font-size: 2.5rem; letter-spacing: 4px; color: var(--accent); }
         
-        /* HEADER & AVATAR */
-        .header-main { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .user-profile { display: flex; align-items: center; gap: 12px; }
-        .avatar-img { width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--accent); background: #333; }
+        .main-content { padding: 20px; max-width: 1600px; margin: auto; }
+
+        /* KPI & PANELS */
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
         
-        /* GRID */
-        .grid { display: grid; grid-template-columns: 1fr 350px; gap: 20px; }
-        .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; position: relative; }
-        .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
-        .kpi-card { background: var(--surface); padding: 15px; border-radius: 8px; border: 1px solid var(--border); border-left: 4px solid var(--accent); }
+        /* SIDEBAR COMPONENTS */
+        .menu-section { margin-bottom: 30px; }
+        .menu-section h4 { text-transform: uppercase; font-size: 11px; color: var(--text-dim); letter-spacing: 1px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
         
-        /* INPUTS */
-        input, select, textarea { width: 100%; padding: 10px; margin-top: 5px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 6px; box-sizing: border-box; }
-        .btn { padding: 10px 15px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; width: 100%; margin-bottom: 10px; }
+        .btn { 
+            padding: 12px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; 
+            transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px;
+            width: 100%; margin-bottom: 10px; font-size: 13px;
+        }
         .btn-primary { background: var(--accent); color: white; }
-        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+        .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text); }
+        .btn-ghost:hover { background: var(--border); }
 
-        /* AVATAR SELECTOR */
-        .avatar-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 15px 0; }
-        .avatar-opt { cursor: pointer; border-radius: 50%; border: 2px solid transparent; transition: 0.2s; width: 40px; }
-        .avatar-opt.selected { border-color: var(--accent); transform: scale(1.1); }
+        /* ACCESS LOGS - HIDDEN BY DEFAULT */
+        #admin-access-panel { display: none; margin-top: 20px; }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
-        th { text-align: left; padding: 10px; border-bottom: 2px solid var(--border); color: var(--text-dim); }
-        td { padding: 10px; border-bottom: 1px solid var(--border); }
+        /* AUTH MODAL */
+        #portal-overlay { 
+            position: fixed; inset: 0; background: var(--bg); z-index: 5000; 
+            display: flex; align-items: center; justify-content: center;
+        }
+        .auth-card { 
+            background: var(--surface); padding: 40px; border-radius: 16px; 
+            border: 1px solid var(--accent); width: 350px; text-align: center; 
+        }
+        .auth-card input { 
+            width: 100%; padding: 15px; background: var(--bg); border: 1px solid var(--border); 
+            color: var(--accent); font-size: 20px; text-align: center; border-radius: 8px; margin: 20px 0;
+        }
+
+        /* UTILS */
+        .tabs { display: flex; gap: 5px; margin-bottom: 20px; }
+        .tab-btn { padding: 10px 20px; background: var(--surface); border: 1px solid var(--border); color: var(--text-dim); cursor: pointer; border-radius: 6px; }
+        .tab-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+        
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th { text-align: left; padding: 12px; color: var(--text-dim); border-bottom: 1px solid var(--border); }
+        td { padding: 12px; border-bottom: 1px solid var(--border); }
+
+        .fab-menu {
+            position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px;
+            background: var(--accent); border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; font-size: 24px; color: white; cursor: pointer;
+            box-shadow: 0 10px 20px var(--accent-glow); z-index: 1000; transition: 0.3s;
+        }
+        .fab-menu:hover { transform: scale(1.1) rotate(90deg); }
 
         @media print {
-            #side-menu, .btn, #entry-form, .edit-cell, .menu-btn { display: none !important; }
-            body { padding: 0; background: white; color: black; }
-            .panel { border: 1px solid #eee; box-shadow: none; }
-            .header-main { text-align: center; display: block; }
+            .fab-menu, #system-menu, .menu-overlay, .tabs, #entry-form, .action-cell { display: none !important; }
+            body { background: white; }
+            .main-content { padding: 0; }
+            .panel { border: 1px solid #eee; break-inside: avoid; }
         }
     </style>
 </head>
 <body class="light-mode">
 
-<div id="portal-overlay">
-    <div class="portal-card">
-        <h2 style="color:var(--accent)">SYSTEM ACCESS</h2>
-        <input type="password" id="access-code" placeholder="PIN CODE">
-        <button class="btn btn-primary" onclick="login()">ENTER DASHBOARD</button>
-    </div>
-</div>
-
-<div id="menu-overlay" class="menu-overlay" onclick="toggleMenu()"></div>
-<div id="side-menu">
-    <h3 style="margin-top:0">System Settings</h3>
-    
-    <label style="font-size: 12px; color: var(--text-dim);">Choose Your Avatar</label>
-    <div class="avatar-grid">
-        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" class="avatar-opt" onclick="setAvatar(this.src)">
-        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka" class="avatar-opt" onclick="setAvatar(this.src)">
-        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=George" class="avatar-opt" onclick="setAvatar(this.src)">
-        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Max" class="avatar-opt" onclick="setAvatar(this.src)">
-    </div>
-
-    <hr style="border: 0; border-top: 1px solid var(--border); margin: 20px 0;">
-    
-    <button class="btn btn-outline" onclick="toggleTheme()">🌓 Toggle Dark/Light</button>
-    <button class="btn btn-outline" onclick="window.print()">🖨️ Export PDF Report</button>
-    <button class="btn btn-outline" onclick="exportExcel()">📊 Export to Excel</button>
-    
-    <button class="btn btn-primary" style="margin-top: 50px;" onclick="toggleMenu()">Close Menu</button>
-</div>
-
-<div id="main-content" style="display:none">
-    <div class="header-main">
-        <div class="user-profile">
-            <img id="current-avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" class="avatar-img">
-            <div>
-                <h2 id="user-name" style="margin:0">User</h2>
-                <div id="user-role" style="font-size:12px; color:var(--text-dim)">Viewer</div>
-            </div>
+    <div id="portal-overlay">
+        <div class="auth-card">
+            <h2 style="margin:0; color:var(--accent)">SECURITY CHECK</h2>
+            <p style="font-size: 12px; color:var(--text-dim)">Please enter your authorization code</p>
+            <input type="password" id="access-code" placeholder="••••••">
+            <button class="btn btn-primary" onclick="authorize()">INIT SYSTEM</button>
         </div>
+    </div>
+
+    <div class="menu-overlay" id="menu-overlay" onclick="toggleMenu()"></div>
+    <div id="system-menu">
+        <div class="menu-section">
+            <h4>Export Controls</h4>
+            <button class="btn btn-ghost" onclick="window.print()">🖨️ Generate PDF Report</button>
+            <button class="btn btn-ghost" onclick="exportCSV()">📊 Export Master Excel</button>
+        </div>
+
+        <div class="menu-section">
+            <h4>Interface Preferences</h4>
+            <button class="btn btn-ghost" id="theme-btn" onclick="toggleTheme()">🌙 Switch to Dark Mode</button>
+        </div>
+
+        <div class="menu-section engineer-only" id="admin-access-panel">
+            <h4>🔒 System Access Logs</h4>
+            <div id="access-logs" style="font-size: 10px; font-family: monospace; height: 200px; overflow-y: auto; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 5px;">
+                </div>
+        </div>
+
+        <button class="btn btn-primary" style="margin-top: 20px;" onclick="toggleMenu()">Close Settings</button>
+    </div>
+
+    <div class="header-banner">
+        <h1>BODYLINE PRODUCTION</h1>
+        <p style="color:var(--text-dim); letter-spacing: 2px;">FACTORY INTELLIGENCE HMI</p>
         
-        <div style="text-align: center;">
-            <h1 style="margin:0; color:var(--accent); letter-spacing: 2px;">BODYLINE PRODUCTION</h1>
-            <span style="font-size:12px; color:var(--text-dim)">FACTORY INTELLIGENCE v2.0</span>
+        <div style="position: absolute; bottom: 10px; left: 20px; display: flex; align-items: center; gap: 10px;">
+            <div id="status-dot" style="width:10px; height:10px; background:var(--success); border-radius:50%;"></div>
+            <span id="user-display" style="font-size: 12px; font-weight: bold; text-transform: uppercase;">Viewer Mode</span>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="tabs">
+            <button class="tab-btn active" onclick="setTab('daily', this)">Daily</button>
+            <button class="tab-btn" onclick="setTab('weekly', this)">Weekly</button>
+            <button class="tab-btn" onclick="setTab('monthly', this)">Monthly</button>
         </div>
 
-        <button class="btn btn-outline menu-btn" style="width:auto" onclick="toggleMenu()">⚙️ Settings</button>
-    </div>
-
-    <div class="kpi-row">
-        <div class="kpi-card"><small>TOTAL ACTUAL</small><div id="kpi-yield">0</div></div>
-        <div class="kpi-card"><small>AVG EFFICIENCY</small><div id="kpi-eff">0%</div></div>
-        <div class="kpi-card"><small>TOP LINE</small><div id="kpi-top">Line 1</div></div>
-        <div class="kpi-card"><small>ACTIVE VIEWERS</small><div>1</div></div>
-    </div>
-
-    <div class="grid">
-        <div class="panel">
-            <h3>Efficiency Trends</h3>
-            <canvas id="mainChart" height="150"></canvas>
-            
-            <h3>Master Log</h3>
-            <div style="overflow-x:auto">
-                <table>
-                    <thead>
-                        <tr><th>Date</th><th>Line</th><th>Target</th><th>Actual</th><th>Eff%</th><th class="admin-only">Action</th></tr>
-                    </thead>
-                    <tbody id="log-body"></tbody>
-                </table>
+        <div class="kpi-grid">
+            <div class="panel">
+                <small style="color:var(--text-dim)">Total Actual Yield</small>
+                <h2 id="kpi-yield" style="margin:5px 0">0</h2>
+            </div>
+            <div class="panel">
+                <small style="color:var(--text-dim)">Average Efficiency</small>
+                <h2 id="kpi-eff" style="margin:5px 0">0%</h2>
+            </div>
+            <div class="panel">
+                <small style="color:var(--text-dim)">Current Top Line</small>
+                <h2 id="lb-dynamic" style="margin:5px 0; color:var(--accent)">---</h2>
             </div>
         </div>
 
-        <div class="panel" id="admin-panel">
-            <div id="entry-form">
-                <h3 style="color:var(--accent)">Data Entry</h3>
-                <input type="date" id="f-date">
-                <select id="f-line">
-                    <option>Line 1</option><option>Line 2</option><option>Line 3</option>
-                    <option>Line 4</option><option>Line 5</option><option>Line 6</option>
-                </select>
-                <input type="number" id="f-target" placeholder="Target">
-                <input type="number" id="f-actual" placeholder="Actual">
-                <button class="btn btn-primary" style="margin-top:15px" onclick="saveData()">SAVE DATA</button>
+        <div style="display: grid; grid-template-columns: 1fr 350px; gap: 20px;">
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                <div class="panel" style="height: 350px;">
+                    <canvas id="prodChart"></canvas>
+                </div>
+                <div class="panel">
+                    <h3>Master Production Log</h3>
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th><th>Line</th><th>Target</th><th>Actual</th><th>Eff%</th><th class="action-cell">Admin</th>
+                                </tr>
+                            </thead>
+                            <tbody id="log-body"></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
-            <div id="access-log-section" style="margin-top:30px; display:none;">
-                <h3 style="font-size:14px; color:var(--danger)">🔐 SYSTEM ACCESS LOGS</h3>
-                <div id="log-list" style="font-family:monospace; font-size:11px; height:200px; overflow-y:auto; background:#000; padding:10px;">
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                <div class="panel" id="entry-form" style="display: none;">
+                    <h3 style="margin-top:0; color:var(--accent)">Data Acquisition</h3>
+                    <div style="display:flex; flex-direction:column; gap:10px;">
+                        <input type="date" id="f-date">
+                        <select id="f-line">
+                            <option>Line 1</option><option>Line 2</option><option>Line 3</option>
+                            <option>Line 4</option><option>Line 5</option><option>Line 6</option>
+                        </select>
+                        <input type="number" id="f-target" placeholder="Target">
+                        <input type="number" id="f-actual" placeholder="Actual">
+                        <button class="btn btn-primary" onclick="saveData()">SUBMIT TO CLOUD</button>
+                    </div>
+                </div>
+                <div class="panel" style="height: 250px;">
+                    <canvas id="effChart"></canvas>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<script>
-    let masterData = JSON.parse(localStorage.getItem('bodyline_data')) || [];
-    let accessLogs = JSON.parse(localStorage.getItem('bodyline_access')) || [];
-    let currentUser = "";
-    let isEngineer = false;
+    <div class="fab-menu" onclick="toggleMenu()">⚙️</div>
 
-    function login() {
-        const code = document.getElementById('access-code').value;
-        const adminSection = document.getElementById('admin-panel');
-        const logSection = document.getElementById('access-log-section');
-        
-        if(code === "122022") {
-            currentUser = "Engr. Pinapit";
-            isEngineer = true;
-            logSection.style.display = "block";
-            adminSection.style.display = "block";
-        } else if(code === "MELVIN24") {
-            currentUser = "Sir Melvin";
-        } else if(code === "RAUL24") {
-            currentUser = "Boss Raul";
-        } else {
-            alert("Invalid Code"); return;
-        }
+    <script>
+        let masterData = JSON.parse(localStorage.getItem('bl_prod_data')) || [];
+        let accessLogs = JSON.parse(localStorage.getItem('bl_access_logs')) || [];
+        let filteredData = [];
+        let currentTab = 'daily';
+        let isEngineer = false;
 
-        document.getElementById('user-name').innerText = currentUser;
-        document.getElementById('user-role').innerText = isEngineer ? "System Admin" : "Executive Viewer";
-        document.getElementById('portal-overlay').style.display = 'none';
-        document.getElementById('main-content').style.display = 'block';
-        
-        // Hide Admin tools if not engineer
-        if(!isEngineer) {
-            document.getElementById('entry-form').style.display = 'none';
-        }
-
-        logAccess(currentUser);
-        initChart();
-        renderData();
-    }
-
-    function toggleMenu() {
-        document.getElementById('side-menu').classList.toggle('open');
-        const overlay = document.getElementById('menu-overlay');
-        overlay.style.display = overlay.style.display === 'block' ? 'none' : 'block';
-    }
-
-    function setAvatar(src) {
-        document.getElementById('current-avatar').src = src;
-        localStorage.setItem('user_avatar_' + currentUser, src);
-        // Highlight selection
-        document.querySelectorAll('.avatar-opt').forEach(img => img.classList.remove('selected'));
-        event.target.classList.add('selected');
-    }
-
-    function toggleTheme() {
-        document.body.classList.toggle('light-mode');
-    }
-
-    function logAccess(user) {
-        const entry = `${new Date().toLocaleString()} - ${user} logged in`;
-        accessLogs.unshift(entry);
-        localStorage.setItem('bodyline_access', JSON.stringify(accessLogs.slice(0, 50)));
-        renderLogs();
-    }
-
-    function renderLogs() {
-        document.getElementById('log-list').innerHTML = accessLogs.map(l => `<div style="margin-bottom:5px; border-bottom:1px solid #222">${l}</div>`).join('');
-    }
-
-    function saveData() {
-        const entry = {
-            id: Date.now(),
-            date: document.getElementById('f-date').value,
-            line: document.getElementById('f-line').value,
-            target: parseInt(document.getElementById('f-target').value),
-            actual: parseInt(document.getElementById('f-actual').value)
-        };
-        masterData.push(entry);
-        localStorage.setItem('bodyline_data', JSON.stringify(masterData));
-        renderData();
-    }
-
-    function renderData() {
-        const body = document.getElementById('log-body');
-        let totalActual = 0;
-        let totalTarget = 0;
-
-        body.innerHTML = masterData.map(row => {
-            const eff = ((row.actual / row.target) * 100).toFixed(1);
-            totalActual += row.actual;
-            totalTarget += row.target;
-            const color = eff < 60 ? 'var(--danger)' : (eff < 90 ? 'var(--warning)' : 'var(--success)');
+        // AUTHENTICATION
+        function authorize() {
+            const code = document.getElementById('access-code').value;
+            const userDisp = document.getElementById('user-display');
             
-            return `<tr>
-                <td>${row.date}</td>
-                <td>${row.line}</td>
-                <td>${row.target}</td>
-                <td>${row.actual}</td>
-                <td style="color:${color}; font-weight:bold">${eff}%</td>
-                <td class="admin-only" style="display:${isEngineer ? 'table-cell' : 'none'}">
-                    <button onclick="deleteRow(${row.id})" style="background:none; border:none; color:var(--danger); cursor:pointer">Delete</button>
-                </td>
-            </tr>`;
-        }).join('');
+            if(code === "122022") {
+                isEngineer = true;
+                userDisp.innerText = "Admin: Engr. Pinapit";
+                document.getElementById('entry-form').style.display = "block";
+                document.getElementById('admin-access-panel').style.display = "block";
+            } else if(code === "MELVIN24") {
+                userDisp.innerText = "Executive: Sir Melvin";
+            } else if(code === "RAUL24") {
+                userDisp.innerText = "Executive: Boss Raul";
+            } else {
+                alert("Access Denied"); return;
+            }
 
-        document.getElementById('kpi-yield').innerText = totalActual;
-        document.getElementById('kpi-eff').innerText = totalTarget > 0 ? ((totalActual / totalTarget) * 100).toFixed(1) + '%' : '0%';
-        updateChart();
-    }
+            document.getElementById('portal-overlay').style.display = "none";
+            logAccess(userDisp.innerText);
+            initCharts();
+            refreshUI();
+        }
 
-    function deleteRow(id) {
-        masterData = masterData.filter(r => r.id !== id);
-        localStorage.setItem('bodyline_data', JSON.stringify(masterData));
-        renderData();
-    }
+        // SIDEBAR TOGGLE
+        function toggleMenu() {
+            const menu = document.getElementById('system-menu');
+            const overlay = document.getElementById('menu-overlay');
+            const isOpen = menu.classList.toggle('active');
+            overlay.style.display = isOpen ? 'block' : 'none';
+        }
 
-    function exportExcel() {
-        let csv = "Date,Line,Target,Actual,Efficiency\n";
-        masterData.forEach(r => {
-            csv += `${r.date},${r.line},${r.target},${r.actual},${((r.actual/r.target)*100).toFixed(1)}%\n`;
-        });
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'Bodyline_Production.csv';
-        a.click();
-    }
+        // ACCESS LOGGING (ADMIN ONLY)
+        function logAccess(user) {
+            const log = `[${new Date().toLocaleTimeString()}] ${user} connected.`;
+            accessLogs.unshift(log);
+            localStorage.setItem('bl_access_logs', JSON.stringify(accessLogs.slice(0, 50)));
+            if(isEngineer) {
+                document.getElementById('access-logs').innerHTML = accessLogs.map(l => `<div style="margin-bottom:5px; border-bottom:1px solid var(--border)">${l}</div>`).join('');
+            }
+        }
 
-    let myChart;
-    function initChart() {
-        const ctx = document.getElementById('mainChart').getContext('2d');
-        myChart = new Chart(ctx, {
-            type: 'bar',
-            data: { labels: [], datasets: [{ label: 'Efficiency %', data: [], backgroundColor: [] }] },
-            options: { scales: { y: { beginAtZero: true, max: 100 } } }
-        });
-    }
+        // THEME
+        function toggleTheme() {
+            const body = document.body;
+            const btn = document.getElementById('theme-btn');
+            const isLight = body.classList.toggle('light-mode');
+            btn.innerText = isLight ? "🌙 Switch to Dark Mode" : "☀️ Switch to Light Mode";
+            refreshUI(); // Redraw charts for visibility
+        }
 
-    function updateChart() {
-        if(!myChart) return;
-        const labels = masterData.map(r => r.line);
-        const values = masterData.map(r => (r.actual/r.target)*100);
-        const colors = values.map(v => v < 60 ? '#ef4444' : (v < 90 ? '#f59e0b' : '#10b981'));
-        
-        myChart.data.labels = labels;
-        myChart.data.datasets[0].data = values;
-        myChart.data.datasets[0].backgroundColor = colors;
-        myChart.update();
-    }
-</script>
+        // DATA LOGIC
+        function saveData() {
+            const data = {
+                id: Date.now(),
+                date: document.getElementById('f-date').value,
+                line: document.getElementById('f-line').value,
+                target: parseInt(document.getElementById('f-target').value) || 0,
+                actual: parseInt(document.getElementById('f-actual').value) || 0
+            };
+            masterData.unshift(data);
+            localStorage.setItem('bl_prod_data', JSON.stringify(masterData));
+            refreshUI();
+            alert("Data Synchronized");
+        }
+
+        function refreshUI() {
+            filterData();
+            updateKPIs();
+            renderTable();
+            updateCharts();
+        }
+
+        function filterData() {
+            const today = new Date().toDateString();
+            filteredData = masterData.filter(r => {
+                const rDate = new Date(r.date).toDateString();
+                if(currentTab === 'daily') return rDate === today;
+                return true; // Simplification for demo, you can add Month/Week logic here
+            });
+            if(filteredData.length === 0) filteredData = masterData.slice(0, 10);
+        }
+
+        function updateKPIs() {
+            const yield = filteredData.reduce((s, r) => s + r.actual, 0);
+            const target = filteredData.reduce((s, r) => s + r.target, 0);
+            document.getElementById('kpi-yield').innerText = yield.toLocaleString();
+            document.getElementById('kpi-eff').innerText = target > 0 ? ((yield/target)*100).toFixed(1) + '%' : '0%';
+        }
+
+        function renderTable() {
+            const body = document.getElementById('log-body');
+            body.innerHTML = filteredData.map(r => {
+                const eff = ((r.actual/r.target)*100).toFixed(1);
+                const color = eff < 60 ? 'var(--danger)' : (eff < 90 ? 'var(--warning)' : 'var(--success)');
+                return `<tr>
+                    <td>${r.date}</td><td>${r.line}</td><td>${r.target}</td><td>${r.actual}</td>
+                    <td style="color:${color}; font-weight:bold">${eff}%</td>
+                    <td class="action-cell">${isEngineer ? `<button onclick="deleteData(${r.id})" style="color:var(--danger); background:none; border:none; cursor:pointer">Delete</button>` : '---'}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        function deleteData(id) {
+            masterData = masterData.filter(r => r.id !== id);
+            localStorage.setItem('bl_prod_data', JSON.stringify(masterData));
+            refreshUI();
+        }
+
+        function exportCSV() {
+            let csv = "Date,Line,Target,Actual,Eff%\n";
+            masterData.forEach(r => {
+                csv += `${r.date},${r.line},${r.target},${r.actual},${((r.actual/r.target)*100).toFixed(1)}%\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', 'Bodyline_Master_Report.csv');
+            a.click();
+        }
+
+        // CHARTS
+        let pChart, eChart;
+        function initCharts() {
+            const ctxP = document.getElementById('prodChart').getContext('2d');
+            const ctxE = document.getElementById('effChart').getContext('2d');
+            
+            pChart = new Chart(ctxP, {
+                type: 'line',
+                data: { labels: [], datasets: [{ label: 'Production', data: [], borderColor: '#0ea5e9', tension: 0.3 }] },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+
+            eChart = new Chart(ctxE, {
+                type: 'bar',
+                data: { labels: [], datasets: [{ label: 'Efficiency', data: [], backgroundColor: [] }] },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        function updateCharts() {
+            if(!pChart) return;
+            const labels = filteredData.map(r => r.line);
+            const data = filteredData.map(r => r.actual);
+            const effs = filteredData.map(r => (r.actual/r.target)*100);
+
+            pChart.data.labels = filteredData.map(r => r.date);
+            pChart.data.datasets[0].data = data;
+            pChart.update();
+
+            eChart.data.labels = labels;
+            eChart.data.datasets[0].data = effs;
+            eChart.data.datasets[0].backgroundColor = effs.map(v => v < 60 ? '#ef4444' : '#10b981');
+            eChart.update();
+        }
+
+        function setTab(tab, btn) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            refreshUI();
+        }
+    </script>
 </body>
 </html>
