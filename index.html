@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bodyline Pro | Delayed Sync HMI v8.1</title>
+    <title>Bodyline Pro | Cloud Sync HMI v8.2</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -18,17 +18,19 @@
         }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; transition: 0.3s; overflow-x: hidden; }
 
-        /* DELAY STATUS INDICATOR */
-        .delay-badge { position: fixed; top: 10px; right: 10px; font-size: 10px; display: flex; align-items: center; gap: 5px; background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 20px; z-index: 4000; border: 1px solid var(--border); }
-        .delay-dot { width: 8px; height: 8px; background: var(--warning); border-radius: 50%; box-shadow: 0 0 5px var(--warning); }
+        /* CLOUD CONNECTION STATUS */
+        .cloud-status { position: fixed; top: 10px; right: 10px; font-size: 11px; display: flex; align-items: center; gap: 8px; background: var(--surface); padding: 6px 12px; border-radius: 20px; z-index: 5000; border: 1px solid var(--border); font-weight: bold; }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; }
+        .dot-offline { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+        .dot-online { background: var(--success); box-shadow: 0 0 8px var(--success); }
 
         /* AUTH & HEADER */
         #portal-overlay { position: fixed; inset: 0; background: #000; z-index: 10000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
         .auth-card { background: #18181b; padding: 40px; border-radius: 16px; border: 1px solid var(--accent); width: 320px; text-align: center; }
         .auth-card input { width: 100%; padding: 15px; background: #000; border: 1px solid var(--border); color: var(--success); font-size: 20px; text-align: center; border-radius: 8px; margin: 20px 0; letter-spacing: 5px; }
-        .header-banner { text-align: center; padding: 15px; background: var(--surface); border-bottom: 2px solid var(--accent); }
+        .header-banner { text-align: center; padding: 25px 15px 15px 15px; background: var(--surface); border-bottom: 2px solid var(--accent); }
 
-        /* LAYOUT */
+        /* TABS & LAYOUT */
         .tabs { display: flex; gap: 10px; justify-content: center; margin: 15px 0; }
         .tab-btn { padding: 8px 20px; background: var(--surface); border: 1px solid var(--border); color: var(--text-dim); border-radius: 20px; cursor: pointer; font-weight: bold; }
         .tab-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
@@ -45,10 +47,6 @@
         .btn { padding: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; }
         .btn-primary { background: var(--accent); color: white; width: 100%; }
 
-        #system-menu { position: fixed; top: 0; right: -350px; width: 320px; height: 100%; background: var(--surface); border-left: 2px solid var(--accent); z-index: 2001; transition: 0.4s; padding: 25px; box-sizing: border-box; visibility: hidden; }
-        #system-menu.active { right: 0; visibility: visible; }
-        .fab { position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1000; font-size: 20px; box-shadow: 0 5px 15px var(--accent-glow); }
-
         table { width: 100%; border-collapse: collapse; font-size: 11px; }
         th { text-align: left; padding: 8px; border-bottom: 1px solid var(--border); color: var(--text-dim); }
         td { padding: 8px; border-bottom: 1px solid var(--border); }
@@ -57,8 +55,9 @@
 </head>
 <body class="light-mode">
 
-    <div class="delay-badge">
-        <div class="delay-dot"></div> <span id="sync-text">3-MIN VIEWER DELAY ACTIVE</span>
+    <div class="cloud-status">
+        <div id="cloud-dot" class="status-dot dot-offline"></div>
+        <span id="cloud-text">CONNECTING TO SERVER...</span>
     </div>
 
     <div id="portal-overlay">
@@ -69,22 +68,11 @@
         </div>
     </div>
 
-    <div id="system-menu">
-        <h3 style="margin-top:0">System Menu</h3>
-        <button class="btn" style="background:var(--border); color:var(--text); margin-bottom: 10px; width: 100%;" onclick="toggleTheme()">🌓 Light/Dark</button>
-        <button class="btn" style="background:var(--border); color:var(--text); margin-bottom: 10px; width: 100%;" onclick="window.print()">🖨️ Print PDF</button>
-        <button class="btn" style="background:var(--border); color:var(--text); width: 100%;" onclick="exportCSV()">📊 Export CSV</button>
-        <div class="admin-only" id="admin-logs-section">
-            <h4 style="color:var(--warning); margin-top: 20px;">🔒 Access Monitoring</h4>
-            <div id="access-log-display" style="font-family:monospace; font-size:9px; height:200px; overflow-y:auto; background:rgba(0,0,0,0.2); padding:10px; border-radius:8px;"></div>
-        </div>
-        <button class="btn btn-primary" style="margin-top:20px" onclick="toggleMenu()">Close</button>
-    </div>
-
     <div class="header-banner">
         <h1 style="margin:0; letter-spacing: 2px; font-size: 24px;">BODYLINE PRODUCTION</h1>
         <div style="display: flex; justify-content: center; gap: 15px; margin-top: 5px; font-size: 11px;">
             <span id="user-display" style="font-weight: bold; color: var(--accent);">Viewer</span>
+            <span id="delay-status" style="color: var(--warning); display: none;">(3-Min Viewer Delay Active)</span>
             <span id="live-clock" style="font-family: monospace;"></span>
         </div>
     </div>
@@ -110,16 +98,12 @@
                 <div style="height: 200px;"><canvas id="prodChart"></canvas></div>
             </div>
             <div class="panel">
-                <h3 style="margin:0 0 10px 0; font-size: 14px;">Downtime Pareto</h3>
-                <div style="height: 200px;"><canvas id="paretoChart"></canvas></div>
+                <h3 style="margin:0 0 10px 0; font-size: 14px;">Efficiency per Line</h3>
+                <div style="height: 200px;"><canvas id="effChart"></canvas></div>
             </div>
         </div>
 
         <div class="chart-row">
-            <div class="panel">
-                <h3 style="margin:0 0 10px 0; font-size: 14px;">Efficiency per Line</h3>
-                <div style="height: 200px;"><canvas id="effChart"></canvas></div>
-            </div>
             <div class="panel admin-only" id="admin-form">
                 <h3 style="margin:0 0 10px 0; color:var(--accent); font-size: 14px;">Data Acquisition</h3>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
@@ -132,31 +116,31 @@
                     <input type="number" id="f-rejects" placeholder="Rejects" value="0">
                     <input type="number" id="f-down" placeholder="Down(m)" value="0">
                 </div>
-                <button class="btn btn-primary" onclick="saveData()" style="margin-top:5px;">TRANSMIT IMMEDIATELY</button>
+                <button class="btn btn-primary" onclick="saveData()" style="margin-top:5px;">TRANSMIT TO CLOUD</button>
             </div>
-        </div>
 
-        <div class="panel">
-            <h3 style="margin:0">Master Log</h3>
-            <div style="overflow-x:auto;">
-                <table id="log-table">
-                    <thead>
-                        <tr><th>Date</th><th>Shift</th><th>Line</th><th>Actual</th><th>Eff%</th><th class="admin-only">Action</th></tr>
-                    </thead>
-                    <tbody id="log-body"></tbody>
-                </table>
+            <div class="panel">
+                <h3 style="margin:0">Master Log (Cloud Sync)</h3>
+                <div style="overflow-x:auto;">
+                    <table id="log-table">
+                        <thead>
+                            <tr><th>Date</th><th>Shift</th><th>Line</th><th>Actual</th><th>Eff%</th><th class="admin-only">Action</th></tr>
+                        </thead>
+                        <tbody id="log-body"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="fab" onclick="toggleMenu()">⚙️</div>
-
     <script>
+        // SUPABASE CONNECTION
         const SB_URL = "https://ywjnbslxdssyriokcdws.supabase.co";
         const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3am5ic2x4ZHNzeXJpb2tjZHdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDg1MDUsImV4cCI6MjA5MTIyNDUwNX0.sNFCBZoSwZS0b5eU6iBmLeTt5ru7dP8G2GYJ9hrxAFg";
         const sb = supabase.createClient(SB_URL, SB_KEY);
 
-        let masterData = [];
+        let rawCloudData = []; // Untouched data from server
+        let displayData = [];  // Data allowed to be shown on screen
         let isEngineer = false;
         let period = 'daily';
         let charts = {};
@@ -179,29 +163,77 @@
                 if(user.admin) {
                     isEngineer = true;
                     document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
-                    document.getElementById('sync-text').innerText = "ADMIN: NO DELAY MODE";
+                } else {
+                    document.getElementById('delay-status').style.display = 'inline';
                 }
+                
                 document.getElementById('portal-overlay').style.display = 'none';
                 initCharts();
                 fetchData();
-                setInterval(fetchData, 30000); // Check every 30s
+                setupRealtime();
+                
+                // Refresh viewer screen every 10 seconds to process the 3-minute delay
+                setInterval(processDelayAndRender, 10000); 
             } else { alert("Access Denied"); }
+        }
+
+        // --- THE MAGIC REAL-TIME FUNCTION ---
+        function setupRealtime() {
+            // Check Server Connection
+            sb.from('production_logs').select('id').limit(1).then(({ error }) => {
+                const dot = document.getElementById('cloud-dot');
+                const txt = document.getElementById('cloud-text');
+                if(!error) {
+                    dot.className = "status-dot dot-online";
+                    txt.innerText = "CLOUD SYNC: ACTIVE";
+                    txt.style.color = "var(--success)";
+                } else {
+                    dot.className = "status-dot dot-offline";
+                    txt.innerText = "CLOUD SYNC: FAILED (Check RLS)";
+                    txt.style.color = "var(--danger)";
+                }
+            });
+
+            // Listen for any new inserts or deletes instantly
+            sb.channel('custom-all-channel')
+              .on('postgres_changes', { event: '*', schema: 'public', table: 'production_logs' }, (payload) => {
+                  console.log("Cloud Update Received!", payload);
+                  fetchData(); // Pull fresh data the second someone else changes it
+              })
+              .subscribe();
         }
 
         async function fetchData() {
             const { data, error } = await sb.from('production_logs').select('*').order('created_at', {ascending:false});
-            if(!error) {
-                const now = new Date();
-                // IF ENGINEER: Show all. IF VIEWER: Delay data by 3 minutes.
-                masterData = isEngineer ? data : data.filter(r => {
-                    const entryTime = new Date(r.created_at);
-                    return (now - entryTime) > 180000; // 180,000 ms = 3 minutes
-                });
-                refreshUI();
+            if(!error && data) {
+                rawCloudData = data;
+                processDelayAndRender();
+            } else {
+                console.error("Database Error:", error);
             }
         }
 
+        function processDelayAndRender() {
+            const now = new Date();
+            
+            // If Admin, show everything immediately. If Viewer, filter out anything less than 3 minutes old.
+            if(isEngineer) {
+                displayData = rawCloudData;
+            } else {
+                displayData = rawCloudData.filter(r => {
+                    const entryTime = new Date(r.created_at);
+                    return (now - entryTime) > 180000; // 180,000 milliseconds = 3 minutes
+                });
+            }
+
+            applyTimeFilters();
+        }
+
         async function saveData() {
+            // Visual indicator
+            const btn = document.querySelector('.btn-primary');
+            btn.innerText = "TRANSMITTING...";
+
             const entry = {
                 date: document.getElementById('f-date').value || new Date().toISOString().split('T')[0],
                 shift: document.getElementById('f-shift').value,
@@ -210,19 +242,19 @@
                 actual: parseInt(document.getElementById('f-actual').value) || 0,
                 rejects: parseInt(document.getElementById('f-rejects').value) || 0,
                 down: parseInt(document.getElementById('f-down').value) || 0,
-                reason: document.getElementById('f-reason').value,
-                created_at: new Date().toISOString()
+                reason: document.getElementById('f-reason').value
             };
 
-            // Instant Local Add for Admin Visual
-            masterData.unshift(entry);
-            refreshUI();
-
             const { error } = await sb.from('production_logs').insert([entry]);
+            
             if(!error) {
                 document.getElementById('f-actual').value = '';
                 document.getElementById('f-down').value = '0';
-                console.log("Transmission Complete.");
+                btn.innerText = "TRANSMIT TO CLOUD";
+                fetchData(); // Immediately pull back your own data
+            } else {
+                alert("Upload failed. Please check your internet connection.");
+                btn.innerText = "TRANSMIT TO CLOUD";
             }
         }
 
@@ -230,12 +262,12 @@
             period = p;
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            refreshUI();
+            applyTimeFilters();
         }
 
-        function refreshUI() {
+        function applyTimeFilters() {
             const now = new Date();
-            const filtered = masterData.filter(r => {
+            const filtered = displayData.filter(r => {
                 const d = new Date(r.date);
                 if(period === 'daily') return d.toDateString() === now.toDateString();
                 if(period === 'weekly') return (now - d) / 86400000 <= 7;
@@ -243,7 +275,7 @@
                 return d.getFullYear() === now.getFullYear();
             });
             
-            const targetData = filtered.length > 0 ? filtered : masterData;
+            const targetData = filtered.length > 0 ? filtered : displayData.slice(0, 10);
             renderTable(targetData);
             updateKPIs(targetData);
             updateCharts(targetData);
@@ -251,7 +283,7 @@
 
         function renderTable(data) {
             const body = document.getElementById('log-body');
-            body.innerHTML = data.slice(0, 15).map(r => {
+            body.innerHTML = data.slice(0, 10).map(r => {
                 const eff = r.target > 0 ? ((r.actual/r.target)*100).toFixed(1) : 0;
                 return `<tr>
                     <td>${r.date}</td><td>${r.shift}</td><td>${r.line}</td><td>${r.actual}</td>
@@ -276,9 +308,6 @@
             charts.prod = new Chart(document.getElementById('prodChart'), {
                 type: 'line', data: { labels: [], datasets: [{ label: 'Actual', borderColor: '#0ea5e9', data: [] }, { label: 'Target', borderColor: '#8b5cf6', data: [], borderDash: [5,5] }]}, options: cfg
             });
-            charts.pareto = new Chart(document.getElementById('paretoChart'), {
-                type: 'bar', data: { labels: [], datasets: [{ label: 'Downtime', backgroundColor: '#ef4444', data: [] }]}, options: cfg
-            });
             charts.eff = new Chart(document.getElementById('effChart'), {
                 type: 'bar', data: { labels: [], datasets: [{ label: 'Eff %', backgroundColor: '#f59e0b', data: [] }]}, options: { ...cfg, scales: { y: { max: 100 } } }
             });
@@ -288,16 +317,11 @@
             if(!charts.prod) return;
             const plotData = [...data].reverse().slice(-10);
             const labels = plotData.map(r => r.date.slice(5) + " " + (r.shift === 'Day Shift' ? 'D' : 'N'));
+            
             charts.prod.data.labels = labels;
             charts.prod.data.datasets[0].data = plotData.map(r => r.actual);
             charts.prod.data.datasets[1].data = plotData.map(r => r.target);
             charts.prod.update();
-
-            const reasons = {};
-            data.forEach(r => { if(r.down > 0) reasons[r.reason] = (reasons[r.reason] || 0) + r.down; });
-            charts.pareto.data.labels = Object.keys(reasons);
-            charts.pareto.data.datasets[0].data = Object.values(reasons);
-            charts.pareto.update();
 
             const lines = [...new Set(data.map(r => r.line))].sort();
             charts.eff.data.labels = lines;
@@ -310,8 +334,6 @@
             charts.eff.update();
         }
 
-        function toggleMenu() { document.getElementById('system-menu').classList.toggle('active'); }
-        function toggleTheme() { document.body.classList.toggle('light-mode'); }
         async function deleteRow(id) { if(confirm("Delete?")) { await sb.from('production_logs').delete().eq('id', id); fetchData(); } }
         setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleString(); }, 1000);
     </script>
