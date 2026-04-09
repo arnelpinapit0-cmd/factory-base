@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Production Telemetry | HMI Dashboard</title>
+    <title>Production Telemetry | HMI V5</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -21,53 +21,55 @@
         body { font-family: var(--font-main); background-color: var(--bg); color: var(--text-primary); margin: 0; padding: 15px; transition: 0.3s; }
         .container { max-width: 1400px; margin: 0 auto; }
 
-        /* Header */
+        /* System Header */
         .hmi-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; background: var(--surface); padding: 15px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 20px; gap: 10px; }
         .sys-status { display: flex; align-items: center; gap: 10px; font-weight: bold; }
         .status-indicator { height: 10px; width: 10px; background-color: var(--success); border-radius: 50%; }
         .theme-toggle { background: transparent; border: 1px solid var(--border); color: var(--text-primary); padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
         #live-clock { font-family: var(--font-mono); font-weight: bold; color: var(--accent); }
 
-        /* Tabs */
+        /* Interactive Tabs */
         .filter-ribbon { display: flex; overflow-x: auto; gap: 10px; margin-bottom: 20px; padding-bottom: 5px; }
-        .filter-btn { flex: 1; min-width: 120px; background: var(--surface); color: var(--text-secondary); border: 1px solid var(--border); padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; text-align: center; }
+        .filter-btn { flex: 1; min-width: 120px; background: var(--surface); color: var(--text-secondary); border: 1px solid var(--border); padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; text-align: center; transition: 0.2s; }
         .filter-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
 
-        /* KPIs */
+        /* KPI Array */
         .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .kpi-card { background: var(--surface); border: 1px solid var(--border); padding: 15px; border-radius: 8px; border-left: 4px solid var(--accent); }
         .kpi-card h3 { margin: 0; font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; }
         .kpi-card p { margin: 5px 0 0; font-size: 1.8rem; font-weight: bold; font-family: var(--font-mono); }
 
-        /* Layout */
+        /* Dashboard Architecture */
         .dashboard-core { display: grid; grid-template-columns: 1fr 350px; gap: 20px; }
         @media (max-width: 900px) { .dashboard-core { grid-template-columns: 1fr; } }
         
         .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; }
-        .panel-title { margin-top: 0; font-size: 1rem; color: var(--text-secondary); border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 15px; }
+        .panel-title { margin-top: 0; font-size: 1rem; color: var(--text-secondary); border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 15px; text-transform: uppercase; }
 
-        /* Form */
+        /* Acquisition Form */
         .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .input-group label { display: block; font-size: 0.75rem; font-weight: bold; color: var(--text-secondary); margin-bottom: 5px; }
-        input { width: 100%; padding: 10px; background: var(--bg); border: 1px solid var(--border); color: var(--text-primary); border-radius: 4px; box-sizing: border-box; }
+        .input-group label { display: block; font-size: 0.75rem; font-weight: bold; color: var(--text-secondary); margin-bottom: 5px; text-transform: uppercase; }
+        input { width: 100%; padding: 10px; background: var(--bg); border: 1px solid var(--border); color: var(--text-primary); border-radius: 4px; box-sizing: border-box; font-family: var(--font-mono); }
         
         .line-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px; }
-        .line-btn { background: var(--bg); border: 1px solid var(--border); color: var(--text-primary); padding: 8px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .line-btn { background: var(--bg); border: 1px solid var(--border); color: var(--text-primary); padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s; }
         .line-btn.active { background: var(--accent); color: white; }
 
-        .btn-transmit { background: var(--accent); color: white; border: none; padding: 15px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; font-size: 1rem; }
+        .btn-transmit { background: var(--accent); color: white; border: none; padding: 15px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; font-size: 1rem; text-transform: uppercase; }
         .btn-cancel { background: var(--text-secondary); color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; display: none; }
 
-        /* Table - Mobile Responsive */
+        /* Telemetry Data Table */
         .table-responsive { overflow-x: auto; }
         table { width: 100%; min-width: 600px; border-collapse: collapse; text-align: left; }
-        th { padding: 12px; font-size: 0.8rem; color: var(--text-secondary); border-bottom: 2px solid var(--border); }
-        td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+        th { padding: 12px; font-size: 0.8rem; color: var(--text-secondary); border-bottom: 2px solid var(--border); text-transform: uppercase; }
+        td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.9rem; font-family: var(--font-mono); }
         
-        /* Action Buttons */
-        .btn-action { padding: 6px 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.75rem; color: white; }
-        .btn-edit { background: var(--warning); margin-right: 5px; }
+        .btn-action { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.75rem; color: white; margin-right: 5px; }
+        .btn-edit { background: var(--warning); color: #000; }
         .btn-del { background: var(--danger); }
+        
+        /* System Alerts */
+        #sys-alert { display: none; padding: 10px; border-radius: 4px; font-weight: bold; font-size: 0.85rem; margin-bottom: 15px; }
     </style>
 </head>
 <body>
@@ -75,49 +77,50 @@
 <div class="container">
     <header class="hmi-header">
         <div class="sys-status">
-            <div class="status-indicator"></div>
-            <span id="greeting-text">System Loading...</span>
+            <div class="status-indicator" id="network-status"></div>
+            <span id="greeting-text">System Booting...</span>
         </div>
         <div style="display: flex; gap: 15px; align-items: center;">
-            <button class="theme-toggle" onclick="toggleTheme()">Dark/Light Mode</button>
+            <button class="theme-toggle" onclick="toggleTheme()">Contrast Toggle</button>
             <div id="live-clock">00:00:00</div>
         </div>
     </header>
 
     <div class="filter-ribbon">
-        <button class="filter-btn active" onclick="applyFilter('all')">Master Data</button>
-        <button class="filter-btn" onclick="applyFilter('weekly')">7-Day Trailing</button>
-        <button class="filter-btn" onclick="applyFilter('monthly')">Current Month</button>
-        <button class="filter-btn" onclick="applyFilter('yearly')">YTD Aggregation</button>
+        <button class="filter-btn active" onclick="applyFilter('all', this)">Master Data</button>
+        <button class="filter-btn" onclick="applyFilter('weekly', this)">7-Day Trailing</button>
+        <button class="filter-btn" onclick="applyFilter('monthly', this)">Current Month</button>
+        <button class="filter-btn" onclick="applyFilter('yearly', this)">YTD Aggregation</button>
     </div>
 
     <div class="kpi-grid">
-        <div class="kpi-card"><h3>Target</h3><p id="kpi-target">0</p></div>
-        <div class="kpi-card"><h3>Actual</h3><p id="kpi-actual">0</p></div>
-        <div class="kpi-card"><h3>Downtime</h3><p id="kpi-dt" style="color:var(--danger);">0m</p></div>
-        <div class="kpi-card"><h3>Efficiency</h3><p id="kpi-eff">0%</p></div>
+        <div class="kpi-card"><h3>Target Yield</h3><p id="kpi-target">0</p></div>
+        <div class="kpi-card"><h3>Actual Yield</h3><p id="kpi-actual">0</p></div>
+        <div class="kpi-card"><h3>Total Downtime</h3><p id="kpi-dt" style="color:var(--danger);">0m</p></div>
+        <div class="kpi-card"><h3>System OEE</h3><p id="kpi-eff">0%</p></div>
     </div>
 
     <div class="dashboard-core">
         <div class="panel">
-            <h2 class="panel-title">Yield Telemetry</h2>
-            <div style="height: 300px;"><canvas id="telemetryChart"></canvas></div>
+            <h2 class="panel-title">Yield Telemetry Analysis</h2>
+            <div style="height: 320px;"><canvas id="telemetryChart"></canvas></div>
         </div>
 
         <div class="panel" id="entry-portal">
             <h2 class="panel-title" id="form-title">Data Acquisition</h2>
+            <div id="sys-alert"></div>
             
             <input type="hidden" id="edit-id" value="">
             
             <div class="input-group" style="margin-bottom: 15px;">
                 <label>Active Production Line</label>
                 <div class="line-grid">
-                    <button class="line-btn active" onclick="selectLine('Line 1')">Line 1</button>
-                    <button class="line-btn" onclick="selectLine('Line 2')">Line 2</button>
-                    <button class="line-btn" onclick="selectLine('Line 3')">Line 3</button>
-                    <button class="line-btn" onclick="selectLine('Line 4')">Line 4</button>
-                    <button class="line-btn" onclick="selectLine('Line 5')">Line 5</button>
-                    <button class="line-btn" onclick="selectLine('Line 6')">Line 6</button>
+                    <button class="line-btn active" onclick="selectLine('Line 1', this)">Line 1</button>
+                    <button class="line-btn" onclick="selectLine('Line 2', this)">Line 2</button>
+                    <button class="line-btn" onclick="selectLine('Line 3', this)">Line 3</button>
+                    <button class="line-btn" onclick="selectLine('Line 4', this)">Line 4</button>
+                    <button class="line-btn" onclick="selectLine('Line 5', this)">Line 5</button>
+                    <button class="line-btn" onclick="selectLine('Line 6', this)">Line 6</button>
                 </div>
             </div>
 
@@ -142,18 +145,18 @@
     </div>
 
     <div class="panel" style="margin-top: 20px;">
-        <h2 class="panel-title">Raw Telemetry Logs</h2>
+        <h2 class="panel-title">Raw Telemetry Database</h2>
         <div class="table-responsive">
             <table>
                 <thead>
                     <tr>
                         <th>Date</th>
                         <th>Line</th>
-                        <th>Run/Down</th>
+                        <th>Run / Down</th>
                         <th>Target</th>
                         <th>Actual</th>
                         <th>Variance</th>
-                        <th>Actions</th>
+                        <th>Command Controls</th>
                     </tr>
                 </thead>
                 <tbody id="log-body"></tbody>
@@ -163,16 +166,18 @@
 </div>
 
 <script>
+    // --- CLOUD ARCHITECTURE ---
     const SB_URL = "https://ywjnbslxdssyriokcdws.supabase.co"; 
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3am5ic2x4ZHNzeXJpb2tjZHdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDg1MDUsImV4cCI6MjA5MTIyNDUwNX0.sNFCBZoSwZS0b5eU6iBmLeTt5ru7dP8G2GYJ9hrxAFg";
     const supabase = libsupabase.createClient(SB_URL, SB_KEY);
 
+    // --- SYSTEM STATE ---
     let masterData = [];
     let currentFilter = 'all';
     let selectedLine = 'Line 1';
     let myChart;
 
-    // UI Initialization (Runs even if DB fails)
+    // --- DOM INITIALIZATION (Bulletproof Logic) ---
     document.addEventListener('DOMContentLoaded', () => {
         try {
             const hour = new Date().getHours();
@@ -191,6 +196,22 @@
         }
     });
 
+    // --- EXPLICIT UI INTERACTIONS (Fixes Problem 1) ---
+    function selectLine(lineId, element) {
+        selectedLine = lineId;
+        const btns = document.querySelectorAll('.line-btn');
+        btns.forEach(btn => btn.classList.remove('active'));
+        element.classList.add('active'); // Explicitly bound
+    }
+
+    function applyFilter(timeframe, element) {
+        currentFilter = timeframe;
+        const btns = document.querySelectorAll('.filter-btn');
+        btns.forEach(btn => btn.classList.remove('active'));
+        element.classList.add('active'); // Explicitly bound
+        processData();
+    }
+
     function toggleTheme() {
         const body = document.body;
         if (body.getAttribute('data-theme') === 'dark') {
@@ -203,67 +224,72 @@
         if(myChart) myChart.update();
     }
 
-    function selectLine(lineId) {
-        selectedLine = lineId;
-        const btns = document.querySelectorAll('.line-btn');
-        btns.forEach(btn => {
-            btn.classList.remove('active');
-            if(btn.innerText === lineId) btn.classList.add('active');
-        });
+    function showAlert(msg, isError = true) {
+        const alertBox = document.getElementById('sys-alert');
+        alertBox.style.display = 'block';
+        alertBox.style.backgroundColor = isError ? '#fee2e2' : '#dcfce7';
+        alertBox.style.color = isError ? 'var(--danger)' : 'var(--success)';
+        alertBox.style.border = `1px solid ${isError ? 'var(--danger)' : 'var(--success)'}`;
+        alertBox.innerText = msg;
+        setTimeout(() => alertBox.style.display = 'none', 5000);
     }
 
-    function applyFilter(timeframe) {
-        currentFilter = timeframe;
-        const btns = document.querySelectorAll('.filter-btn');
-        btns.forEach(btn => btn.classList.remove('active'));
-        event.target.classList.add('active');
-        processData();
-    }
-
-    // Database Operations
+    // --- DATABASE PROTOCOLS (Fixes Problem 2) ---
     async function fetchTelemetry() {
         try {
             const { data, error } = await supabase.from('production_logs').select('*').order('date', { ascending: true });
             if (error) throw error;
             masterData = data || [];
+            document.getElementById('network-status').style.backgroundColor = 'var(--success)';
             processData();
         } catch (error) {
-            console.error("Fetch Error:", error);
-            document.getElementById('greeting-text').innerText = "⚠️ Database Connection Error";
-            document.getElementById('greeting-text').style.color = "var(--danger)";
+            console.error("DB Fetch Error:", error);
+            document.getElementById('network-status').style.backgroundColor = 'var(--danger)';
+            document.getElementById('greeting-text').innerText += " (Offline Mode)";
         }
     }
 
     async function transmitData() {
-        const editId = document.getElementById('edit-id').value;
+        const editIdRaw = document.getElementById('edit-id').value;
+        const editId = editIdRaw ? parseInt(editIdRaw, 10) : null;
+        
+        // Strict Data Sanitization (Prevents NaN lockups)
+        const tgt = parseInt(document.getElementById('p-target').value, 10);
+        const act = parseInt(document.getElementById('p-actual').value, 10);
+        const rt = parseInt(document.getElementById('p-run').value, 10);
+        const dt = parseInt(document.getElementById('p-down').value, 10);
+
         const payload = {
             date: document.getElementById('p-date').value,
             machine: selectedLine,
-            target: parseInt(document.getElementById('p-target').value) || 0,
-            actual: parseInt(document.getElementById('p-actual').value) || 0,
-            run_time: parseInt(document.getElementById('p-run').value) || 0,
-            downtime: parseInt(document.getElementById('p-down').value) || 0
+            target: isNaN(tgt) ? 0 : tgt,
+            actual: isNaN(act) ? 0 : act,
+            run_time: isNaN(rt) ? 0 : rt,
+            downtime: isNaN(dt) ? 0 : dt
         };
+
+        document.getElementById('submit-btn').innerText = "Transmitting...";
 
         try {
             if (editId) {
                 const { error } = await supabase.from('production_logs').update(payload).eq('id', editId);
                 if (error) throw error;
-                alert("Record Updated Successfully.");
+                showAlert("System Updated Successfully", false);
             } else {
                 const { error } = await supabase.from('production_logs').insert([payload]);
                 if (error) throw error;
+                showAlert("Data Transmitted Successfully", false);
             }
-            
             cancelEdit();
             fetchTelemetry();
         } catch (error) {
             console.error(error);
-            alert("Save Failed. Ensure you have 'id', 'run_time', and 'downtime' columns in Supabase.");
+            showAlert("Database Error: Verify Row Level Security (RLS) is disabled for UPDATE/DELETE.", true);
+        } finally {
+            document.getElementById('submit-btn').innerText = editId ? "Update Record" : "Transmit Data";
         }
     }
 
-    // Editing Logic
     function editRecord(id) {
         const item = masterData.find(d => d.id === id);
         if(!item) return;
@@ -274,12 +300,18 @@
         document.getElementById('p-actual').value = item.actual;
         document.getElementById('p-run').value = item.run_time || 0;
         document.getElementById('p-down').value = item.downtime || 0;
-        selectLine(item.machine);
+        
+        // Find and click the correct line button
+        const lineBtns = document.querySelectorAll('.line-btn');
+        lineBtns.forEach(btn => {
+            if(btn.innerText === item.machine) selectLine(item.machine, btn);
+        });
 
         document.getElementById('submit-btn').innerText = "Update Record";
         document.getElementById('submit-btn').style.background = "var(--warning)";
+        document.getElementById('submit-btn').style.color = "#000";
         document.getElementById('cancel-btn').style.display = "block";
-        document.getElementById('form-title').innerText = "Editing Record";
+        document.getElementById('form-title').innerText = "Editing Telemetry ID: " + item.id;
         
         document.getElementById('entry-portal').scrollIntoView({ behavior: 'smooth' });
     }
@@ -293,23 +325,25 @@
         
         document.getElementById('submit-btn').innerText = "Transmit Data";
         document.getElementById('submit-btn').style.background = "var(--accent)";
+        document.getElementById('submit-btn').style.color = "#fff";
         document.getElementById('cancel-btn').style.display = "none";
         document.getElementById('form-title').innerText = "Data Acquisition";
     }
 
     async function deleteRecord(id) {
-        if (confirm("Are you sure you want to permanently delete this record?")) {
+        if (confirm("SYSTEM OVERRIDE: Permanently delete this record?")) {
             try {
                 const { error } = await supabase.from('production_logs').delete().eq('id', id);
                 if (error) throw error;
+                showAlert("Record Purged.", false);
                 fetchTelemetry();
             } catch (error) {
-                alert("Could not delete record. Check permissions.");
+                showAlert("Purge Failed: Check Database Permissions.", true);
             }
         }
     }
 
-    // Rendering Engine
+    // --- DATA PROCESSING & RENDERING ---
     function processData() {
         let filtered = [...masterData];
         const now = new Date();
@@ -342,11 +376,11 @@
             
             tbody.innerHTML += `<tr>
                 <td style="white-space: nowrap;">${item.date}</td>
-                <td style="font-weight:bold; color:var(--accent);">${item.machine}</td>
+                <td style="font-weight:bold; color:var(--text-primary);">${item.machine}</td>
                 <td>${item.run_time || 0}m / <span style="color:var(--danger)">${item.downtime || 0}m</span></td>
-                <td>${item.target}</td>
-                <td>${item.actual}</td>
-                <td style="color:${varColor}; font-weight:bold;">${varQty > 0 ? '+' : ''}${varQty}</td>
+                <td>${item.target.toLocaleString()}</td>
+                <td>${item.actual.toLocaleString()}</td>
+                <td style="color:${varColor}; font-weight:bold;">${varQty > 0 ? '+' : ''}${varQty.toLocaleString()}</td>
                 <td style="white-space: nowrap;">
                     <button class="btn-action btn-edit" onclick="editRecord(${item.id})">Edit</button>
                     <button class="btn-action btn-del" onclick="deleteRecord(${item.id})">Del</button>
