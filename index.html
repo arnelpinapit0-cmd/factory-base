@@ -2,83 +2,72 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Production Telemetry | HMI Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* CSS Variable Architecture for State Toggling */
         :root {
-            --bg: #f4f5f7;
-            --surface: #ffffff;
-            --text-primary: #111827;
-            --text-secondary: #6b7280;
-            --border: #e5e7eb;
-            --accent: #2563eb;
-            --success: #059669;
-            --warning: #d97706;
-            --danger: #dc2626;
-            --font-main: 'Segoe UI', system-ui, sans-serif;
-            --font-mono: 'Courier New', Courier, monospace;
+            --bg: #f4f5f7; --surface: #ffffff; --text-primary: #111827; --text-secondary: #6b7280;
+            --border: #e5e7eb; --accent: #2563eb; --success: #059669; --warning: #d97706; --danger: #dc2626;
+            --font-main: 'Segoe UI', system-ui, sans-serif; --font-mono: 'Courier New', Courier, monospace;
         }
 
         [data-theme="dark"] {
-            --bg: #0b0f19;
-            --surface: #111827;
-            --text-primary: #f9fafb;
-            --text-secondary: #9ca3af;
-            --border: #374151;
-            --accent: #3b82f6;
+            --bg: #0b0f19; --surface: #111827; --text-primary: #f9fafb; --text-secondary: #9ca3af;
+            --border: #374151; --accent: #3b82f6;
         }
 
-        body { font-family: var(--font-main); background-color: var(--bg); color: var(--text-primary); margin: 0; padding: 20px; transition: background-color 0.3s, color 0.3s; }
+        body { font-family: var(--font-main); background-color: var(--bg); color: var(--text-primary); margin: 0; padding: 15px; transition: 0.3s; }
         .container { max-width: 1400px; margin: 0 auto; }
 
-        /* Control Panel Header */
-        .hmi-header { display: flex; justify-content: space-between; align-items: center; background: var(--surface); padding: 15px 25px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .sys-status { display: flex; align-items: center; gap: 15px; font-weight: 600; font-size: 1.1rem; }
-        .status-indicator { height: 10px; width: 10px; background-color: var(--success); border-radius: 50%; box-shadow: 0 0 8px var(--success); }
-        
-        .sys-controls { display: flex; gap: 15px; align-items: center; }
-        .theme-toggle { background: transparent; border: 1px solid var(--border); color: var(--text-primary); padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; }
-        .theme-toggle:hover { background: var(--border); }
-        #live-clock { font-family: var(--font-mono); font-size: 1.2rem; font-weight: bold; color: var(--accent); }
+        /* Header */
+        .hmi-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; background: var(--surface); padding: 15px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 20px; gap: 10px; }
+        .sys-status { display: flex; align-items: center; gap: 10px; font-weight: bold; }
+        .status-indicator { height: 10px; width: 10px; background-color: var(--success); border-radius: 50%; }
+        .theme-toggle { background: transparent; border: 1px solid var(--border); color: var(--text-primary); padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        #live-clock { font-family: var(--font-mono); font-weight: bold; color: var(--accent); }
 
-        /* Timeframe Ribbon */
-        .filter-ribbon { display: flex; gap: 10px; margin-bottom: 20px; }
-        .filter-btn { background: var(--surface); color: var(--text-secondary); border: 1px solid var(--border); padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: 0.2s; }
+        /* Tabs */
+        .filter-ribbon { display: flex; overflow-x: auto; gap: 10px; margin-bottom: 20px; padding-bottom: 5px; }
+        .filter-btn { flex: 1; min-width: 120px; background: var(--surface); color: var(--text-secondary); border: 1px solid var(--border); padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; text-align: center; }
         .filter-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
 
-        /* KPI Grid */
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 20px; }
-        .kpi-card { background: var(--surface); border: 1px solid var(--border); padding: 20px; border-radius: 8px; border-left: 4px solid var(--accent); }
-        .kpi-card h3 { margin: 0; font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
-        .kpi-card p { margin: 10px 0 0; font-size: 2.2rem; font-weight: 800; font-family: var(--font-mono); }
-        
-        /* Main Layout */
-        .dashboard-core { display: grid; grid-template-columns: 1fr 400px; gap: 20px; }
-        @media (max-width: 1024px) { .dashboard-core { grid-template-columns: 1fr; } }
+        /* KPIs */
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .kpi-card { background: var(--surface); border: 1px solid var(--border); padding: 15px; border-radius: 8px; border-left: 4px solid var(--accent); }
+        .kpi-card h3 { margin: 0; font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; }
+        .kpi-card p { margin: 5px 0 0; font-size: 1.8rem; font-weight: bold; font-family: var(--font-mono); }
+
+        /* Layout */
+        .dashboard-core { display: grid; grid-template-columns: 1fr 350px; gap: 20px; }
+        @media (max-width: 900px) { .dashboard-core { grid-template-columns: 1fr; } }
         
         .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; }
-        .panel-title { margin-top: 0; font-size: 1rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 20px; }
+        .panel-title { margin-top: 0; font-size: 1rem; color: var(--text-secondary); border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 15px; }
 
-        /* Data Acquisition Form */
-        .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
-        .input-group label { display: block; font-size: 0.75rem; font-weight: bold; color: var(--text-secondary); margin-bottom: 5px; text-transform: uppercase; }
-        input { width: 100%; padding: 10px; background: var(--bg); border: 1px solid var(--border); color: var(--text-primary); border-radius: 4px; box-sizing: border-box; font-family: var(--font-mono); }
+        /* Form */
+        .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .input-group label { display: block; font-size: 0.75rem; font-weight: bold; color: var(--text-secondary); margin-bottom: 5px; }
+        input { width: 100%; padding: 10px; background: var(--bg); border: 1px solid var(--border); color: var(--text-primary); border-radius: 4px; box-sizing: border-box; }
         
-        /* Line Selector Grid */
-        .line-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
-        .line-btn { background: var(--bg); border: 1px solid var(--border); color: var(--text-primary); padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        .line-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+        .line-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px; }
+        .line-btn { background: var(--bg); border: 1px solid var(--border); color: var(--text-primary); padding: 8px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .line-btn.active { background: var(--accent); color: white; }
 
-        .btn-transmit { background: var(--accent); color: white; border: none; padding: 15px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; text-transform: uppercase; letter-spacing: 1px; transition: 0.2s; }
-        .btn-transmit:hover { filter: brightness(1.2); }
+        .btn-transmit { background: var(--accent); color: white; border: none; padding: 15px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; font-size: 1rem; }
+        .btn-cancel { background: var(--text-secondary); color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; display: none; }
 
-        /* Data Table */
-        table { width: 100%; border-collapse: collapse; text-align: left; }
-        th { padding: 12px; font-size: 0.8rem; color: var(--text-secondary); border-bottom: 2px solid var(--border); text-transform: uppercase; }
-        td { padding: 12px; border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: 0.9rem; }
+        /* Table - Mobile Responsive */
+        .table-responsive { overflow-x: auto; }
+        table { width: 100%; min-width: 600px; border-collapse: collapse; text-align: left; }
+        th { padding: 12px; font-size: 0.8rem; color: var(--text-secondary); border-bottom: 2px solid var(--border); }
+        td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+        
+        /* Action Buttons */
+        .btn-action { padding: 6px 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.75rem; color: white; }
+        .btn-edit { background: var(--warning); margin-right: 5px; }
+        .btn-del { background: var(--danger); }
     </style>
 </head>
 <body>
@@ -87,10 +76,10 @@
     <header class="hmi-header">
         <div class="sys-status">
             <div class="status-indicator"></div>
-            <span id="greeting-text">System Initialization...</span>
+            <span id="greeting-text">System Loading...</span>
         </div>
-        <div class="sys-controls">
-            <button class="theme-toggle" onclick="toggleTheme()">Toggle Contrast Mode</button>
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <button class="theme-toggle" onclick="toggleTheme()">Dark/Light Mode</button>
             <div id="live-clock">00:00:00</div>
         </div>
     </header>
@@ -106,21 +95,23 @@
         <div class="kpi-card"><h3>Target</h3><p id="kpi-target">0</p></div>
         <div class="kpi-card"><h3>Actual</h3><p id="kpi-actual">0</p></div>
         <div class="kpi-card"><h3>Downtime</h3><p id="kpi-dt" style="color:var(--danger);">0m</p></div>
-        <div class="kpi-card"><h3 title="Overall Equipment Effectiveness">OEE / Efficiency</h3><p id="kpi-eff">0%</p></div>
+        <div class="kpi-card"><h3>Efficiency</h3><p id="kpi-eff">0%</p></div>
     </div>
 
     <div class="dashboard-core">
         <div class="panel">
             <h2 class="panel-title">Yield Telemetry</h2>
-            <div style="height: 350px;"><canvas id="telemetryChart"></canvas></div>
+            <div style="height: 300px;"><canvas id="telemetryChart"></canvas></div>
         </div>
 
-        <div class="panel">
-            <h2 class="panel-title">Data Acquisition Portal</h2>
+        <div class="panel" id="entry-portal">
+            <h2 class="panel-title" id="form-title">Data Acquisition</h2>
+            
+            <input type="hidden" id="edit-id" value="">
             
             <div class="input-group" style="margin-bottom: 15px;">
                 <label>Active Production Line</label>
-                <div class="line-grid" id="line-selector">
+                <div class="line-grid">
                     <button class="line-btn active" onclick="selectLine('Line 1')">Line 1</button>
                     <button class="line-btn" onclick="selectLine('Line 2')">Line 2</button>
                     <button class="line-btn" onclick="selectLine('Line 3')">Line 3</button>
@@ -145,67 +136,61 @@
                 <div class="input-group"><label>Downtime (Min)</label><input type="number" id="p-down" value="0"></div>
             </div>
 
-            <button class="btn-transmit" onclick="transmitData()">Transmit to Database</button>
+            <button class="btn-transmit" id="submit-btn" onclick="transmitData()">Transmit Data</button>
+            <button class="btn-cancel" id="cancel-btn" onclick="cancelEdit()">Cancel Editing</button>
         </div>
     </div>
 
     <div class="panel" style="margin-top: 20px;">
         <h2 class="panel-title">Raw Telemetry Logs</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Timestamp</th>
-                    <th>Asset ID</th>
-                    <th>Runtime</th>
-                    <th>Downtime</th>
-                    <th>Target</th>
-                    <th>Actual</th>
-                    <th>Variance</th>
-                </tr>
-            </thead>
-            <tbody id="log-body"></tbody>
-        </table>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Line</th>
+                        <th>Run/Down</th>
+                        <th>Target</th>
+                        <th>Actual</th>
+                        <th>Variance</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="log-body"></tbody>
+            </table>
+        </div>
     </div>
 </div>
 
 <script>
-    // --- DB CONFIGURATION ---
     const SB_URL = "https://ywjnbslxdssyriokcdws.supabase.co"; 
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3am5ic2x4ZHNzeXJpb2tjZHdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDg1MDUsImV4cCI6MjA5MTIyNDUwNX0.sNFCBZoSwZS0b5eU6iBmLeTt5ru7dP8G2GYJ9hrxAFg";
     const supabase = libsupabase.createClient(SB_URL, SB_KEY);
 
-    // --- STATE MANAGEMENT ---
     let masterData = [];
     let currentFilter = 'all';
     let selectedLine = 'Line 1';
     let myChart;
 
-    // --- SYSTEM INITIALIZATION ---
+    // UI Initialization (Runs even if DB fails)
     document.addEventListener('DOMContentLoaded', () => {
-        initializeGreeting();
-        startClock();
-        initChart();
-        fetchTelemetry();
-        
-        // Auto-set today's date
-        document.getElementById('p-date').valueAsDate = new Date();
+        try {
+            const hour = new Date().getHours();
+            let phase = hour < 12 ? "Morning" : hour < 18 ? "Afternoon" : "Evening";
+            document.getElementById('greeting-text').innerText = `Good ${phase}, Sir`;
+            
+            setInterval(() => {
+                document.getElementById('live-clock').innerText = new Date().toLocaleTimeString('en-US', { hour12: false });
+            }, 1000);
+
+            document.getElementById('p-date').valueAsDate = new Date();
+            initChart();
+            fetchTelemetry();
+        } catch(e) {
+            console.error("UI Init Error:", e);
+        }
     });
 
-    function initializeGreeting() {
-        const hour = new Date().getHours();
-        let phase = "Evening";
-        if (hour < 12) phase = "Morning";
-        else if (hour < 18) phase = "Afternoon";
-        document.getElementById('greeting-text').innerText = `Good ${phase}, Sir`;
-    }
-
-    function startClock() {
-        setInterval(() => {
-            document.getElementById('live-clock').innerText = new Date().toLocaleTimeString('en-US', { hour12: false });
-        }, 1000);
-    }
-
-    // --- THEME ENGINE ---
     function toggleTheme() {
         const body = document.body;
         if (body.getAttribute('data-theme') === 'dark') {
@@ -218,12 +203,13 @@
         if(myChart) myChart.update();
     }
 
-    // --- UI INTERACTIONS ---
     function selectLine(lineId) {
         selectedLine = lineId;
         const btns = document.querySelectorAll('.line-btn');
-        btns.forEach(btn => btn.classList.remove('active'));
-        event.target.classList.add('active');
+        btns.forEach(btn => {
+            btn.classList.remove('active');
+            if(btn.innerText === lineId) btn.classList.add('active');
+        });
     }
 
     function applyFilter(timeframe) {
@@ -234,16 +220,22 @@
         processData();
     }
 
-    // --- DATA ACQUISITION ---
+    // Database Operations
     async function fetchTelemetry() {
-        const { data, error } = await supabase.from('production_logs').select('*').order('date', { ascending: true });
-        if (data) {
-            masterData = data;
+        try {
+            const { data, error } = await supabase.from('production_logs').select('*').order('date', { ascending: true });
+            if (error) throw error;
+            masterData = data || [];
             processData();
+        } catch (error) {
+            console.error("Fetch Error:", error);
+            document.getElementById('greeting-text').innerText = "⚠️ Database Connection Error";
+            document.getElementById('greeting-text').style.color = "var(--danger)";
         }
     }
 
     async function transmitData() {
+        const editId = document.getElementById('edit-id').value;
         const payload = {
             date: document.getElementById('p-date').value,
             machine: selectedLine,
@@ -253,104 +245,146 @@
             downtime: parseInt(document.getElementById('p-down').value) || 0
         };
 
-        if (payload.target === 0 && payload.actual === 0) return alert("Warning: Yield values cannot be zero.");
-
-        const { error } = await supabase.from('production_logs').insert([payload]);
-        if (!error) {
-            document.getElementById('p-target').value = "";
-            document.getElementById('p-actual').value = "";
+        try {
+            if (editId) {
+                const { error } = await supabase.from('production_logs').update(payload).eq('id', editId);
+                if (error) throw error;
+                alert("Record Updated Successfully.");
+            } else {
+                const { error } = await supabase.from('production_logs').insert([payload]);
+                if (error) throw error;
+            }
+            
+            cancelEdit();
             fetchTelemetry();
-        } else {
+        } catch (error) {
             console.error(error);
-            alert("Transmission Failure. Verify database schema for run_time and downtime columns.");
+            alert("Save Failed. Ensure you have 'id', 'run_time', and 'downtime' columns in Supabase.");
         }
     }
 
-    // --- DATA PROCESSING & FILTERING ---
+    // Editing Logic
+    function editRecord(id) {
+        const item = masterData.find(d => d.id === id);
+        if(!item) return;
+
+        document.getElementById('edit-id').value = item.id;
+        document.getElementById('p-date').value = item.date;
+        document.getElementById('p-target').value = item.target;
+        document.getElementById('p-actual').value = item.actual;
+        document.getElementById('p-run').value = item.run_time || 0;
+        document.getElementById('p-down').value = item.downtime || 0;
+        selectLine(item.machine);
+
+        document.getElementById('submit-btn').innerText = "Update Record";
+        document.getElementById('submit-btn').style.background = "var(--warning)";
+        document.getElementById('cancel-btn').style.display = "block";
+        document.getElementById('form-title').innerText = "Editing Record";
+        
+        document.getElementById('entry-portal').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function cancelEdit() {
+        document.getElementById('edit-id').value = "";
+        document.getElementById('p-target').value = "";
+        document.getElementById('p-actual').value = "";
+        document.getElementById('p-down').value = "0";
+        document.getElementById('p-run').value = "480";
+        
+        document.getElementById('submit-btn').innerText = "Transmit Data";
+        document.getElementById('submit-btn').style.background = "var(--accent)";
+        document.getElementById('cancel-btn').style.display = "none";
+        document.getElementById('form-title').innerText = "Data Acquisition";
+    }
+
+    async function deleteRecord(id) {
+        if (confirm("Are you sure you want to permanently delete this record?")) {
+            try {
+                const { error } = await supabase.from('production_logs').delete().eq('id', id);
+                if (error) throw error;
+                fetchTelemetry();
+            } catch (error) {
+                alert("Could not delete record. Check permissions.");
+            }
+        }
+    }
+
+    // Rendering Engine
     function processData() {
-        let filteredData = [...masterData];
+        let filtered = [...masterData];
         const now = new Date();
 
         if (currentFilter === 'weekly') {
             const sevenDaysAgo = new Date(now.setDate(now.getDate() - 7));
-            filteredData = masterData.filter(d => new Date(d.date) >= sevenDaysAgo);
+            filtered = masterData.filter(d => new Date(d.date) >= sevenDaysAgo);
         } else if (currentFilter === 'monthly') {
-            const currentMonth = now.getMonth();
-            const currentYear = now.getFullYear();
-            filteredData = masterData.filter(d => {
+            const currMonth = now.getMonth(), currYear = now.getFullYear();
+            filtered = masterData.filter(d => {
                 const itemDate = new Date(d.date);
-                return itemDate.getMonth() === currentMonth && itemDate.getFullYear() === currentYear;
+                return itemDate.getMonth() === currMonth && itemDate.getFullYear() === currYear;
             });
         } else if (currentFilter === 'yearly') {
-            const currentYear = now.getFullYear();
-            filteredData = masterData.filter(d => new Date(d.date).getFullYear() === currentYear);
+            const currYear = now.getFullYear();
+            filtered = masterData.filter(d => new Date(d.date).getFullYear() === currYear);
         }
-
-        renderDashboard(filteredData);
+        renderDashboard(filtered);
     }
 
-    // --- RENDER ENGINE ---
     function renderDashboard(data) {
         const tbody = document.getElementById('log-body');
         tbody.innerHTML = "";
         let tT = 0, tA = 0, tD = 0;
 
-        // Render Table (Reverse chronological)
         [...data].reverse().forEach(item => {
             tT += item.target; tA += item.actual; tD += (item.downtime || 0);
             const varQty = item.actual - item.target;
             const varColor = varQty >= 0 ? 'var(--success)' : 'var(--danger)';
             
             tbody.innerHTML += `<tr>
-                <td>${item.date}</td>
+                <td style="white-space: nowrap;">${item.date}</td>
                 <td style="font-weight:bold; color:var(--accent);">${item.machine}</td>
-                <td>${item.run_time || 0}</td>
-                <td style="color:var(--danger);">${item.downtime || 0}</td>
+                <td>${item.run_time || 0}m / <span style="color:var(--danger)">${item.downtime || 0}m</span></td>
                 <td>${item.target}</td>
                 <td>${item.actual}</td>
                 <td style="color:${varColor}; font-weight:bold;">${varQty > 0 ? '+' : ''}${varQty}</td>
+                <td style="white-space: nowrap;">
+                    <button class="btn-action btn-edit" onclick="editRecord(${item.id})">Edit</button>
+                    <button class="btn-action btn-del" onclick="deleteRecord(${item.id})">Del</button>
+                </td>
             </tr>`;
         });
 
-        // Update KPIs
         document.getElementById('kpi-target').innerText = tT.toLocaleString();
         document.getElementById('kpi-actual').innerText = tA.toLocaleString();
         document.getElementById('kpi-dt').innerText = tD + "m";
         document.getElementById('kpi-eff').innerText = tT > 0 ? ((tA / tT) * 100).toFixed(1) + "%" : "0%";
-
-        // Update Chart
         updateChart(data);
     }
 
     function initChart() {
         const ctx = document.getElementById('telemetryChart').getContext('2d');
-        Chart.defaults.font.family = "'Courier New', monospace";
         myChart = new Chart(ctx, {
             type: 'bar',
             data: { labels: [], datasets: [
-                { label: 'Actual Yield', backgroundColor: '#2563eb', data: [], borderRadius: 4 },
-                { label: 'Target Limit', backgroundColor: '#9ca3af', data: [], borderRadius: 4 }
+                { label: 'Actual', backgroundColor: '#2563eb', data: [] },
+                { label: 'Target', backgroundColor: '#9ca3af', data: [] }
             ]},
             options: { responsive: true, maintainAspectRatio: false }
         });
     }
 
     function updateChart(data) {
-        // Aggregate data by date for the chart
-        const aggregated = data.reduce((acc, curr) => {
-            if (!acc[curr.date]) acc[curr.date] = { actual: 0, target: 0 };
-            acc[curr.date].actual += curr.actual;
-            acc[curr.date].target += curr.target;
+        const agg = data.reduce((acc, curr) => {
+            if (!acc[curr.date]) acc[curr.date] = { act: 0, tgt: 0 };
+            acc[curr.date].act += curr.actual; acc[curr.date].tgt += curr.target;
             return acc;
         }, {});
-
-        const labels = Object.keys(aggregated).sort();
+        const labels = Object.keys(agg).sort();
         myChart.data.labels = labels;
-        myChart.data.datasets[0].data = labels.map(l => aggregated[l].actual);
-        myChart.data.datasets[1].data = labels.map(l => aggregated[l].target);
+        myChart.data.datasets[0].data = labels.map(l => agg[l].act);
+        myChart.data.datasets[1].data = labels.map(l => agg[l].tgt);
         myChart.update();
     }
 </script>
-
 </body>
 </html>
