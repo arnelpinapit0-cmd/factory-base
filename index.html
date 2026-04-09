@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bodyline Pro | Real-Time Industrial HMI v8.0</title>
+    <title>Bodyline Pro | Delayed Sync HMI v8.1</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -16,27 +16,23 @@
             --bg: #f8fafc; --surface: #ffffff; --accent: #2563eb; --accent-glow: rgba(37, 99, 235, 0.2);
             --text: #0f172a; --text-dim: #64748b; --border: #e2e8f0;
         }
-        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; transition: 0.3s; overflow-x: hidden; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; transition: 0.3s; overflow-x: hidden; }
 
-        /* ANDON & REAL-TIME STATUS */
-        #andon-banner { display: none; background: var(--danger); color: white; text-align: center; padding: 10px; font-weight: 800; animation: blinker 1s linear infinite; position: sticky; top: 0; z-index: 3000; }
-        @keyframes blinker { 50% { opacity: 0.5; } }
-        
-        .sync-indicator { position: fixed; top: 10px; right: 10px; font-size: 10px; display: flex; align-items: center; gap: 5px; color: var(--success); z-index: 4000; }
-        .sync-dot { width: 8px; height: 8px; background: var(--success); border-radius: 50%; box-shadow: 0 0 5px var(--success); }
+        /* DELAY STATUS INDICATOR */
+        .delay-badge { position: fixed; top: 10px; right: 10px; font-size: 10px; display: flex; align-items: center; gap: 5px; background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 20px; z-index: 4000; border: 1px solid var(--border); }
+        .delay-dot { width: 8px; height: 8px; background: var(--warning); border-radius: 50%; box-shadow: 0 0 5px var(--warning); }
 
         /* AUTH & HEADER */
-        #portal-overlay { position: fixed; inset: 0; background: #000; z-index: 10000; display: flex; align-items: center; justify-content: center; }
+        #portal-overlay { position: fixed; inset: 0; background: #000; z-index: 10000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
         .auth-card { background: #18181b; padding: 40px; border-radius: 16px; border: 1px solid var(--accent); width: 320px; text-align: center; }
         .auth-card input { width: 100%; padding: 15px; background: #000; border: 1px solid var(--border); color: var(--success); font-size: 20px; text-align: center; border-radius: 8px; margin: 20px 0; letter-spacing: 5px; }
         .header-banner { text-align: center; padding: 15px; background: var(--surface); border-bottom: 2px solid var(--accent); }
 
-        /* PERIOD TABS */
+        /* LAYOUT */
         .tabs { display: flex; gap: 10px; justify-content: center; margin: 15px 0; }
-        .tab-btn { padding: 8px 20px; background: var(--surface); border: 1px solid var(--border); color: var(--text-dim); border-radius: 20px; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        .tab-btn.active { background: var(--accent); color: white; border-color: var(--accent); box-shadow: 0 0 10px var(--accent-glow); }
+        .tab-btn { padding: 8px 20px; background: var(--surface); border: 1px solid var(--border); color: var(--text-dim); border-radius: 20px; cursor: pointer; font-weight: bold; }
+        .tab-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
 
-        /* KPI & LAYOUT */
         .main-content { padding: 0 15px; max-width: 1600px; margin: auto; }
         .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 15px; }
         .kpi-card { background: var(--surface); border: 1px solid var(--border); padding: 12px; border-radius: 10px; text-align: center; }
@@ -44,53 +40,51 @@
         @media (max-width: 900px) { .chart-row { grid-template-columns: 1fr; } }
         .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 15px; }
 
-        input, select, textarea { width: 100%; padding: 10px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 6px; box-sizing: border-box; }
-        .btn { padding: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        /* FORM */
+        input, select, textarea { width: 100%; padding: 10px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 6px; box-sizing: border-box; margin-bottom: 5px; }
+        .btn { padding: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; }
         .btn-primary { background: var(--accent); color: white; width: 100%; }
 
         #system-menu { position: fixed; top: 0; right: -350px; width: 320px; height: 100%; background: var(--surface); border-left: 2px solid var(--accent); z-index: 2001; transition: 0.4s; padding: 25px; box-sizing: border-box; visibility: hidden; }
         #system-menu.active { right: 0; visibility: visible; }
-        .fab { position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1000; box-shadow: 0 5px 15px var(--accent-glow); }
+        .fab { position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1000; font-size: 20px; box-shadow: 0 5px 15px var(--accent-glow); }
 
         table { width: 100%; border-collapse: collapse; font-size: 11px; }
         th { text-align: left; padding: 8px; border-bottom: 1px solid var(--border); color: var(--text-dim); }
         td { padding: 8px; border-bottom: 1px solid var(--border); }
-        .line-link { color: var(--accent); cursor: pointer; font-weight: bold; }
         .admin-only { display: none; }
     </style>
 </head>
 <body class="light-mode">
 
-    <div id="andon-banner">🚨 CRITICAL ALERT: PERFORMANCE DROP DETECTED 🚨</div>
-    
-    <div class="sync-indicator">
-        <div class="sync-dot"></div> LIVE SYNC ACTIVE
+    <div class="delay-badge">
+        <div class="delay-dot"></div> <span id="sync-text">3-MIN VIEWER DELAY ACTIVE</span>
     </div>
 
     <div id="portal-overlay">
         <div class="auth-card">
-            <h2 style="margin:0; color:var(--accent)">SECURITY</h2>
+            <h2 style="margin:0; color:var(--accent)">BODYLINE LOGIN</h2>
             <input type="password" id="access-code" placeholder="PIN CODE">
-            <button class="btn btn-primary" onclick="authorize()">INIT DASHBOARD</button>
+            <button class="btn btn-primary" onclick="authorize()">ENTER</button>
         </div>
     </div>
 
     <div id="system-menu">
-        <h3 style="margin-top:0">Settings</h3>
-        <button class="btn" style="background:var(--border); color:var(--text); margin-bottom: 10px; width: 100%;" onclick="toggleTheme()">🌓 Toggle Mode</button>
-        <button class="btn" style="background:var(--border); color:var(--text); margin-bottom: 10px; width: 100%;" onclick="window.print()">🖨️ Export PDF</button>
+        <h3 style="margin-top:0">System Menu</h3>
+        <button class="btn" style="background:var(--border); color:var(--text); margin-bottom: 10px; width: 100%;" onclick="toggleTheme()">🌓 Light/Dark</button>
+        <button class="btn" style="background:var(--border); color:var(--text); margin-bottom: 10px; width: 100%;" onclick="window.print()">🖨️ Print PDF</button>
         <button class="btn" style="background:var(--border); color:var(--text); width: 100%;" onclick="exportCSV()">📊 Export CSV</button>
         <div class="admin-only" id="admin-logs-section">
-            <h4 style="color:var(--warning); margin: 20px 0 5px 0;">🔒 Access Logs</h4>
+            <h4 style="color:var(--warning); margin-top: 20px;">🔒 Access Monitoring</h4>
             <div id="access-log-display" style="font-family:monospace; font-size:9px; height:200px; overflow-y:auto; background:rgba(0,0,0,0.2); padding:10px; border-radius:8px;"></div>
         </div>
         <button class="btn btn-primary" style="margin-top:20px" onclick="toggleMenu()">Close</button>
     </div>
 
     <div class="header-banner">
-        <h1 style="margin:0; letter-spacing: 2px;">BODYLINE PRODUCTION</h1>
+        <h1 style="margin:0; letter-spacing: 2px; font-size: 24px;">BODYLINE PRODUCTION</h1>
         <div style="display: flex; justify-content: center; gap: 15px; margin-top: 5px; font-size: 11px;">
-            <span id="user-display" style="font-weight: bold; color: var(--accent);">Viewer Mode</span>
+            <span id="user-display" style="font-weight: bold; color: var(--accent);">Viewer</span>
             <span id="live-clock" style="font-family: monospace;"></span>
         </div>
     </div>
@@ -106,49 +100,48 @@
         <div class="kpi-grid">
             <div class="kpi-card"><small>Yield</small><div id="kpi-yield" style="font-size:18px; font-weight:bold;">0</div></div>
             <div class="kpi-card"><small>Efficiency</small><div id="kpi-eff" style="font-size:18px; font-weight:bold;">0%</div></div>
-            <div class="kpi-card"><small>OEE Quality</small><div id="kpi-quality" style="font-size:18px; font-weight:bold;">0%</div></div>
+            <div class="kpi-card"><small>Quality</small><div id="kpi-quality" style="font-size:18px; font-weight:bold;">0%</div></div>
             <div class="kpi-card"><small>Downtime</small><div id="kpi-down" style="font-size:18px; font-weight:bold;">0m</div></div>
-            <div class="kpi-card" style="border: 1px solid var(--accent);"><small>Forecast</small><div id="kpi-forecast" style="font-size:18px; font-weight:bold; color:var(--accent);">0</div></div>
         </div>
 
         <div class="chart-row">
             <div class="panel">
-                <h3 style="margin:0 0 10px 0; font-size: 14px;">Yield & Forecast</h3>
-                <div style="height: 220px;"><canvas id="prodChart"></canvas></div>
+                <h3 style="margin:0 0 10px 0; font-size: 14px;">Yield Monitoring</h3>
+                <div style="height: 200px;"><canvas id="prodChart"></canvas></div>
             </div>
             <div class="panel">
                 <h3 style="margin:0 0 10px 0; font-size: 14px;">Downtime Pareto</h3>
-                <div style="height: 220px;"><canvas id="paretoChart"></canvas></div>
+                <div style="height: 200px;"><canvas id="paretoChart"></canvas></div>
             </div>
         </div>
 
         <div class="chart-row">
             <div class="panel">
-                <h3 style="margin:0 0 10px 0; font-size: 14px;">Line Efficiency (%)</h3>
-                <div style="height: 220px;"><canvas id="effChart"></canvas></div>
+                <h3 style="margin:0 0 10px 0; font-size: 14px;">Efficiency per Line</h3>
+                <div style="height: 200px;"><canvas id="effChart"></canvas></div>
             </div>
             <div class="panel admin-only" id="admin-form">
-                <h3 style="margin:0 0 10px 0; color:var(--accent); font-size: 14px;">Data Entry</h3>
+                <h3 style="margin:0 0 10px 0; color:var(--accent); font-size: 14px;">Data Acquisition</h3>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                     <input type="date" id="f-date">
                     <select id="f-shift"><option>Day Shift</option><option>Night Shift</option></select>
                     <select id="f-line"><option>Line 1</option><option>Line 2</option><option>Line 3</option><option>Line 4</option><option>Line 5</option><option>Line 6</option></select>
-                    <select id="f-reason"><option>Normal</option><option>No Operation</option><option>Mechanical</option><option>Electrical</option><option>Material</option><option>QC</option></select>
+                    <select id="f-reason"><option>Normal</option><option>Mechanical</option><option>Electrical</option><option>Material</option><option>QC</option></select>
                     <input type="number" id="f-target" placeholder="Target">
                     <input type="number" id="f-actual" placeholder="Actual">
                     <input type="number" id="f-rejects" placeholder="Rejects" value="0">
                     <input type="number" id="f-down" placeholder="Down(m)" value="0">
                 </div>
-                <button class="btn btn-primary" onclick="saveData()" style="margin-top:8px;">TRANSMIT</button>
+                <button class="btn btn-primary" onclick="saveData()" style="margin-top:5px;">TRANSMIT IMMEDIATELY</button>
             </div>
         </div>
 
         <div class="panel">
-            <h3 style="margin-top:0">Master Log (Real-Time Feed)</h3>
+            <h3 style="margin:0">Master Log</h3>
             <div style="overflow-x:auto;">
                 <table id="log-table">
                     <thead>
-                        <tr><th>Date</th><th>Shift</th><th>Line</th><th>Actual</th><th>Eff%</th><th>Reason</th><th class="admin-only">Action</th></tr>
+                        <tr><th>Date</th><th>Shift</th><th>Line</th><th>Actual</th><th>Eff%</th><th class="admin-only">Action</th></tr>
                     </thead>
                     <tbody id="log-body"></tbody>
                 </table>
@@ -159,7 +152,6 @@
     <div class="fab" onclick="toggleMenu()">⚙️</div>
 
     <script>
-        // LIVE DATABASE CONNECTION
         const SB_URL = "https://ywjnbslxdssyriokcdws.supabase.co";
         const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3am5ic2x4ZHNzeXJpb2tjZHdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDg1MDUsImV4cCI6MjA5MTIyNDUwNX0.sNFCBZoSwZS0b5eU6iBmLeTt5ru7dP8G2GYJ9hrxAFg";
         const sb = supabase.createClient(SB_URL, SB_KEY);
@@ -172,7 +164,7 @@
         function authorize() {
             const pin = document.getElementById('access-code').value;
             const roles = {
-                "122022": { name: "Engr. Pinapit", admin: true },
+                "122022": { name: "Engr. Pinapit (Admin)", admin: true },
                 "882041": { name: "Sir Melvin", admin: false },
                 "559312": { name: "Boss Raul", admin: false },
                 "440192": { name: "Production Dept", admin: false },
@@ -187,54 +179,50 @@
                 if(user.admin) {
                     isEngineer = true;
                     document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
+                    document.getElementById('sync-text').innerText = "ADMIN: NO DELAY MODE";
                 }
                 document.getElementById('portal-overlay').style.display = 'none';
                 initCharts();
-                setupRealtime();
                 fetchData();
-            } else { alert("Invalid PIN"); }
-        }
-
-        // REAL-TIME BROADCAST LISTENER
-        function setupRealtime() {
-            sb.channel('db-changes')
-              .on('postgres_changes', { event: '*', schema: 'public', table: 'production_logs' }, () => {
-                  console.log("Database update detected! Refreshing all views...");
-                  fetchData();
-              }).subscribe();
+                setInterval(fetchData, 30000); // Check every 30s
+            } else { alert("Access Denied"); }
         }
 
         async function fetchData() {
-            const { data, error } = await sb.from('production_logs').select('*').order('date', {ascending:false});
+            const { data, error } = await sb.from('production_logs').select('*').order('created_at', {ascending:false});
             if(!error) {
-                masterData = data;
+                const now = new Date();
+                // IF ENGINEER: Show all. IF VIEWER: Delay data by 3 minutes.
+                masterData = isEngineer ? data : data.filter(r => {
+                    const entryTime = new Date(r.created_at);
+                    return (now - entryTime) > 180000; // 180,000 ms = 3 minutes
+                });
                 refreshUI();
             }
         }
 
         async function saveData() {
             const entry = {
-                date: document.getElementById('f-date').value,
+                date: document.getElementById('f-date').value || new Date().toISOString().split('T')[0],
                 shift: document.getElementById('f-shift').value,
                 line: document.getElementById('f-line').value,
                 target: parseInt(document.getElementById('f-target').value) || 0,
                 actual: parseInt(document.getElementById('f-actual').value) || 0,
                 rejects: parseInt(document.getElementById('f-rejects').value) || 0,
                 down: parseInt(document.getElementById('f-down').value) || 0,
-                reason: document.getElementById('f-reason').value
+                reason: document.getElementById('f-reason').value,
+                created_at: new Date().toISOString()
             };
+
+            // Instant Local Add for Admin Visual
+            masterData.unshift(entry);
+            refreshUI();
 
             const { error } = await sb.from('production_logs').insert([entry]);
             if(!error) {
-                // Clear inputs
                 document.getElementById('f-actual').value = '';
                 document.getElementById('f-down').value = '0';
-                
-                // Check Andon
-                if((entry.actual/entry.target)*100 < 60) {
-                    document.getElementById('andon-banner').style.display = 'block';
-                    setTimeout(() => document.getElementById('andon-banner').style.display = 'none', 5000);
-                }
+                console.log("Transmission Complete.");
             }
         }
 
@@ -254,7 +242,7 @@
                 if(period === 'monthly') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
                 return d.getFullYear() === now.getFullYear();
             });
-
+            
             const targetData = filtered.length > 0 ? filtered : masterData;
             renderTable(targetData);
             updateKPIs(targetData);
@@ -268,7 +256,6 @@
                 return `<tr>
                     <td>${r.date}</td><td>${r.shift}</td><td>${r.line}</td><td>${r.actual}</td>
                     <td style="color:${eff < 60 ? 'var(--danger)' : 'var(--success)'}; font-weight:bold">${eff}%</td>
-                    <td>${r.reason}</td>
                     <td class="admin-only" style="display:${isEngineer ? 'table-cell' : 'none'}">
                         <button onclick="deleteRow(${r.id})" style="color:var(--danger); border:none; background:none; cursor:pointer">🗑</button>
                     </td>
@@ -282,7 +269,6 @@
             document.getElementById('kpi-eff').innerText = (t.t > 0 ? (t.a/t.t*100) : 0).toFixed(1) + '%';
             document.getElementById('kpi-quality').innerText = (t.a > 0 ? ((t.a - t.rej)/t.a*100) : 100).toFixed(1) + '%';
             document.getElementById('kpi-down').innerText = t.d + 'm';
-            document.getElementById('kpi-forecast').innerText = Math.round(t.a * 1.1).toLocaleString();
         }
 
         function initCharts() {
@@ -326,7 +312,7 @@
 
         function toggleMenu() { document.getElementById('system-menu').classList.toggle('active'); }
         function toggleTheme() { document.body.classList.toggle('light-mode'); }
-        async function deleteRow(id) { if(confirm("Delete?")) await sb.from('production_logs').delete().eq('id', id); }
+        async function deleteRow(id) { if(confirm("Delete?")) { await sb.from('production_logs').delete().eq('id', id); fetchData(); } }
         setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleString(); }, 1000);
     </script>
 </body>
