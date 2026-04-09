@@ -3,91 +3,262 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Production Pro - Online Team Base</title>
+    <title>Production Pro | Executive Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --primary: #2563eb; --success: #16a34a; --danger: #dc2626; --warning: #f59e0b; --bg: #f8fafc; --text: #1e293b; }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; }
-        .container { max-width: 1000px; margin: 0 auto; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center; }
-        .chart-container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 30px; height: 350px; }
-        .input-section { background: white; padding: 20px; border-radius: 12px; margin-bottom: 30px; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; align-items: end; border: 2px solid var(--primary); }
-        input, button { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; }
-        .btn-add { background: var(--primary); color: white; border: none; cursor: pointer; font-weight: bold; }
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
-        th { background: #f1f5f9; }
+        :root {
+            --cobalt: #1e3a8a;
+            --emerald: #10b981;
+            --crimson: #ef4444;
+            --amber: #f59e0b;
+            --slate: #0f172a;
+            --bg-light: #f1f5f9;
+        }
+
+        body { 
+            font-family: 'Inter', 'Segoe UI', sans-serif; 
+            background-color: var(--bg-light); 
+            color: var(--slate); 
+            margin: 0; padding: 20px; 
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; }
+
+        /* Notification Styling */
+        .greeting-bar {
+            background: var(--cobalt);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 12px rgba(30, 58, 138, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Stats Cards Hierarchy */
+        .stats-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
+            gap: 20px; 
+            margin-bottom: 30px; 
+        }
+        .card { 
+            background: white; padding: 25px; border-radius: 16px; 
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); 
+            border-top: 5px solid var(--cobalt);
+        }
+        .card h3 { margin: 0; font-size: 0.9rem; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
+        .card p { margin: 10px 0 0; font-size: 2rem; font-weight: 800; color: var(--slate); }
+
+        /* Professional Layout */
+        .dashboard-main { display: grid; grid-template-columns: 1fr 350px; gap: 25px; }
+        
+        @media (max-width: 900px) {
+            .dashboard-main { grid-template-columns: 1fr; }
+        }
+
+        .chart-section { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+
+        /* Form Styling */
+        .form-section { background: #ffffff; padding: 25px; border-radius: 16px; border: 1px solid #e2e8f0; height: fit-content; }
+        .form-section h4 { margin-top: 0; color: var(--cobalt); border-bottom: 2px solid var(--bg-light); padding-bottom: 10px; }
+        
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; font-size: 0.75rem; font-weight: 700; margin-bottom: 5px; color: #475569; }
+        input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
+        
+        .btn-save { 
+            background: var(--cobalt); color: white; border: none; padding: 15px; 
+            border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; font-size: 1rem;
+            transition: 0.3s;
+        }
+        .btn-save:hover { background: #1e40af; transform: translateY(-2px); }
+
+        /* Professional Table Hierarchy */
+        .table-container { margin-top: 30px; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f8fafc; padding: 18px; text-align: left; font-size: 0.85rem; color: #475569; }
+        td { padding: 18px; border-top: 1px solid #f1f5f9; font-size: 0.95rem; }
+        tr:hover { background-color: #f8fafc; }
+
+        .tag { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+        .tag-dt { background: #fee2e2; color: var(--crimson); }
+        .tag-rt { background: #dcfce7; color: var(--emerald); }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Production Dashboard</h1>
-        <div class="stats-grid">
-            <div class="card"><h3>Target</h3><p id="total-target">0</p></div>
-            <div class="card"><h3>Actual</h3><p id="total-actual">0</p></div>
-            <div class="card"><h3>Efficiency</h3><p id="efficiency">0%</p></div>
+
+<div class="container">
+    <div class="greeting-bar">
+        <div id="greeting-text">Welcome, Loading Dashboard...</div>
+        <div id="live-clock">00:00:00</div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="card"><h3>Total Target</h3><p id="total-target">0</p></div>
+        <div class="card"><h3>Total Actual</h3><p id="total-actual">0</p></div>
+        <div class="card"><h3>Total Downtime</h3><p id="total-dt" style="color:var(--crimson);">0m</p></div>
+        <div class="card"><h3>Efficiency</h3><p id="efficiency">0%</p></div>
+    </div>
+
+    <div class="dashboard-main">
+        <div class="chart-section">
+            <canvas id="productionChart" style="height: 400px;"></canvas>
         </div>
-        <div class="chart-container"><canvas id="productionChart"></canvas></div>
-        <div class="input-section">
-            <input type="date" id="prod-date">
-            <input type="text" id="machine-name" placeholder="Machine ID">
-            <input type="number" id="target-qty" placeholder="Target">
-            <input type="number" id="actual-qty" placeholder="Actual">
-            <button class="btn-add" onclick="handleSubmit()">Save to Cloud</button>
+
+        <div class="form-section">
+            <h4>Data Entry Portal</h4>
+            <div class="input-group">
+                <label>Production Date</label>
+                <input type="date" id="p-date">
+            </div>
+            <div class="input-group">
+                <label>Machine/Line ID</label>
+                <input type="text" id="p-machine" placeholder="Bodyline 1">
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <div class="input-group"><label>Target</label><input type="number" id="p-target"></div>
+                <div class="input-group"><label>Actual</label><input type="number" id="p-actual"></div>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <div class="input-group"><label>Run Time (min)</label><input type="number" id="p-run" placeholder="480"></div>
+                <div class="input-group"><label>Downtime (min)</label><input type="number" id="p-down" placeholder="0"></div>
+            </div>
+            <button class="btn-save" onclick="handleSubmit()">Publish to Team Base</button>
         </div>
+    </div>
+
+    <div class="table-container">
         <table>
-            <thead><tr><th>Date</th><th>Machine</th><th>Target</th><th>Actual</th><th>+/-</th></tr></thead>
+            <thead>
+                <tr>
+                    <th>DATE</th>
+                    <th>MACHINE</th>
+                    <th>RUN/DOWN</th>
+                    <th>TARGET</th>
+                    <th>ACTUAL</th>
+                    <th>EFFICIENCY</th>
+                </tr>
+            </thead>
             <tbody id="log-body"></tbody>
         </table>
     </div>
+</div>
 
-    <script>
-        const SB_URL = "https://ywjnbslxdssyriokcdws.supabase.co";
-        const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3am5ic2x4ZHNzeXJpb2tjZHdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDg1MDUsImV4cCI6MjA5MTIyNDUwNX0.sNFCBZoSwZS0b5eU6iBmLeTt5ru7dP8G2GYJ9hrxAFg";
-        const supabase = libsupabase.createClient(SB_URL, SB_KEY);
+<script>
+    // --- DATABASE CONFIG ---
+    const SB_URL = "https://ywjnbslxdssyriokcdws.supabase.co"; 
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3am5ic2x4ZHNzeXJpb2tjZHdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDg1MDUsImV4cCI6MjA5MTIyNDUwNX0.sNFCBZoSwZS0b5eU6iBmLeTt5ru7dP8G2GYJ9hrxAFg";
+    const supabase = libsupabase.createClient(SB_URL, SB_KEY);
 
-        let myChart;
-        async function loadData() {
-            const { data, error } = await supabase.from('production_logs').select('*').order('date', { ascending: true });
-            if (data) { renderUI(data); renderChart(data); }
+    let prodData = [];
+    let myChart;
+
+    // Greeting Logic
+    function setGreeting() {
+        const hour = new Date().getHours();
+        let msg = "Good Day, Sir!";
+        if (hour < 12) msg = "Good Morning, Sir!";
+        else if (hour < 18) msg = "Good Afternoon, Sir!";
+        else msg = "Good Evening, Sir!";
+        document.getElementById('greeting-text').innerText = msg;
+    }
+
+    setInterval(() => {
+        document.getElementById('live-clock').innerText = new Date().toLocaleTimeString();
+    }, 1000);
+
+    // Initialize Chart
+    function initChart() {
+        const ctx = document.getElementById('productionChart').getContext('2d');
+        myChart = new Chart(ctx, {
+            type: 'bar',
+            data: { labels: [], datasets: [
+                { label: 'Actual', backgroundColor: '#1e3a8a', data: [] },
+                { label: 'Target', backgroundColor: '#cbd5e1', data: [] }
+            ]},
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
+
+    async function loadData() {
+        const { data, error } = await supabase.from('production_logs').select('*').order('date', { ascending: true });
+        if (data) {
+            prodData = data;
+            updateDisplay();
         }
+    }
 
-        async function handleSubmit() {
-            const date = document.getElementById('prod-date').value;
-            const machine = document.getElementById('machine-name').value;
-            const target = parseInt(document.getElementById('target-qty').value);
-            const actual = parseInt(document.getElementById('actual-qty').value);
-            await supabase.from('production_logs').insert([{ date, machine, target, actual }]);
+    async function handleSubmit() {
+        const payload = {
+            date: document.getElementById('p-date').value,
+            machine: document.getElementById('p-machine').value,
+            target: parseInt(document.getElementById('p-target').value),
+            actual: parseInt(document.getElementById('p-actual').value),
+            run_time: parseInt(document.getElementById('p-run').value) || 0,
+            downtime: parseInt(document.getElementById('p-down').value) || 0
+        };
+
+        if (!payload.date || !payload.machine) return alert("Please fill the essentials.");
+
+        const { error } = await supabase.from('production_logs').insert([payload]);
+        if (error) alert("Database Error: Make sure your table has run_time and downtime columns!");
+        else {
             loadData();
+            clearForm();
         }
+    }
 
-        function renderUI(data) {
-            const tbody = document.getElementById('log-body');
-            tbody.innerHTML = "";
-            let t = 0, a = 0;
-            data.forEach(item => {
-                t += item.target; a += item.actual;
-                tbody.innerHTML += `<tr><td>${item.date}</td><td>${item.machine}</td><td>${item.target}</td><td>${item.actual}</td><td>${item.actual - item.target}</td></tr>`;
-            });
-            document.getElementById('total-target').innerText = t;
-            document.getElementById('total-actual').innerText = a;
-            document.getElementById('efficiency').innerText = t > 0 ? ((a/t)*100).toFixed(1) + "%" : "0%";
-        }
+    function updateDisplay() {
+        const tbody = document.getElementById('log-body');
+        tbody.innerHTML = "";
+        let tT = 0, tA = 0, tD = 0;
 
-        function renderChart(data) {
-            if(myChart) myChart.destroy();
-            const ctx = document.getElementById('productionChart').getContext('2d');
-            myChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: data.map(d => d.date),
-                    datasets: [{ label: 'Actual', data: data.map(d => d.actual), borderColor: '#2563eb' }]
-                }
-            });
-        }
-        loadData();
-    </script>
+        prodData.forEach(item => {
+            tT += item.target; tA += item.actual; tD += (item.downtime || 0);
+            const eff = item.target > 0 ? ((item.actual / item.target) * 100).toFixed(1) : 0;
+            
+            tbody.innerHTML = `<tr>
+                <td><b>${item.date}</b></td>
+                <td>${item.machine}</td>
+                <td><span class="tag tag-rt">${item.run_time || 0}m</span> <span class="tag tag-dt">${item.downtime || 0}m</span></td>
+                <td>${item.target.toLocaleString()}</td>
+                <td>${item.actual.toLocaleString()}</td>
+                <td style="font-weight:bold; color:${eff >= 100 ? 'var(--emerald)' : 'var(--amber)'}">${eff}%</td>
+            </tr>` + tbody.innerHTML;
+        });
+
+        document.getElementById('total-target').innerText = tT.toLocaleString();
+        document.getElementById('total-actual').innerText = tA.toLocaleString();
+        document.getElementById('total-dt').innerText = tD + "m";
+        document.getElementById('efficiency').innerText = tT > 0 ? ((tA / tT) * 100).toFixed(1) + "%" : "0%";
+
+        updateChart();
+    }
+
+    function updateChart() {
+        myChart.data.labels = prodData.map(d => d.date);
+        myChart.data.datasets[0].data = prodData.map(d => d.actual);
+        myChart.data.datasets[1].data = prodData.map(d => d.target);
+        myChart.update();
+    }
+
+    function clearForm() {
+        document.getElementById('p-machine').value = "";
+        document.getElementById('p-target').value = "";
+        document.getElementById('p-actual').value = "";
+        document.getElementById('p-down').value = "";
+    }
+
+    window.onload = () => { setGreeting(); initChart(); loadData(); };
+</script>
+
 </body>
 </html>
