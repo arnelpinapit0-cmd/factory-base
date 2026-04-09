@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bodyline Pro | Industrial Intelligence HMI</title>
+    <title>Bodyline Pro | Industrial Intelligence HMI v6.2</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -29,13 +29,12 @@
         /* KPI DYNAMICS */
         .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin: 20px; }
         .kpi-card { background: var(--surface); border: 1px solid var(--border); padding: 20px; border-radius: 12px; text-align: center; transition: 0.3s; }
-        .status-good { border-bottom: 4px solid var(--success); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2); }
-        .status-warn { border-bottom: 4px solid var(--warning); box-shadow: 0 4px 15px rgba(245, 158, 11, 0.2); }
+        .status-good { border-bottom: 4px solid var(--success); }
+        .status-warn { border-bottom: 4px solid var(--warning); }
         .status-crit { border-bottom: 4px solid var(--danger); animation: pulse-red 2s infinite; }
-
         @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
 
-        /* CHARTS */
+        /* MAIN CONTENT */
         .main-content { padding: 0 20px 20px 20px; max-width: 1600px; margin: auto; }
         .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
         @media (max-width: 1000px) { .chart-row { grid-template-columns: 1fr; } }
@@ -47,14 +46,22 @@
         .btn { padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; width: 100%; transition: 0.2s; }
         .btn-primary { background: var(--accent); color: white; }
 
-        /* HUD SETTINGS */
-        #system-menu { position: fixed; top: 0; right: -320px; width: 300px; height: 100%; background: var(--surface); border-left: 1px solid var(--border); z-index: 2000; transition: 0.4s; padding: 30px; }
-        #system-menu.active { right: 0; }
+        /* FIXED SETTINGS SIDEBAR */
+        #system-menu { 
+            position: fixed; top: 0; right: -350px; width: 320px; height: 100%; 
+            background: var(--surface); border-left: 2px solid var(--accent); 
+            z-index: 2001; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+            padding: 25px; box-sizing: border-box; visibility: hidden;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+        }
+        #system-menu.active { right: 0; visibility: visible; }
+        .menu-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; display: none; }
+        
         .fab { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1000; font-size: 24px; box-shadow: 0 5px 15px var(--accent-glow); }
 
-        table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        th { text-align: left; padding: 12px; color: var(--text-dim); border-bottom: 2px solid var(--border); }
-        td { padding: 12px; border-bottom: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        th { text-align: left; padding: 10px; color: var(--text-dim); border-bottom: 2px solid var(--border); }
+        td { padding: 10px; border-bottom: 1px solid var(--border); }
 
         .admin-only { display: none; }
     </style>
@@ -64,21 +71,26 @@
     <div id="portal-overlay">
         <div class="auth-card">
             <h2 style="margin:0; color:var(--accent)">SECURITY ACCESS</h2>
-            <p style="font-size: 11px; color:var(--text-dim)">V6.0 INDUSTRIAL INTELLIGENCE</p>
+            <p style="font-size: 11px; color:var(--text-dim)">V6.2 INDUSTRIAL INTELLIGENCE</p>
             <input type="password" id="access-code" placeholder="PIN CODE">
-            <button class="btn btn-primary" onclick="authorize()">ENTER</button>
+            <button class="btn btn-primary" onclick="authorize()">ENTER SYSTEM</button>
         </div>
     </div>
 
+    <div class="menu-overlay" id="menu-overlay" onclick="toggleMenu()"></div>
+
     <div id="system-menu">
-        <h3>System HUD</h3>
-        <button class="btn" style="background:var(--border); color:var(--text); margin-bottom: 10px;" onclick="toggleTheme()">🌓 Toggle Theme</button>
-        <button class="btn" style="background:var(--border); color:var(--text); margin-bottom: 10px;" onclick="window.print()">🖨️ PDF Report</button>
-        <button class="btn" style="background:var(--border); color:var(--text);" onclick="exportExcel()">📊 Export Master CSV</button>
-        <div class="admin-only" style="margin-top: 20px;">
-            <p style="font-size: 11px; color: var(--warning)">⚠️ Backup Data Weekly</p>
+        <h3 style="margin-top:0; color:var(--accent)">System HUD</h3>
+        <button class="btn" style="background:var(--border); color:var(--text); margin-bottom: 10px;" onclick="toggleTheme()">🌓 Toggle Light/Dark</button>
+        <button class="btn" style="background:var(--border); color:var(--text); margin-bottom: 10px;" onclick="window.print()">🖨️ Generate PDF</button>
+        <button class="btn" style="background:var(--border); color:var(--text); margin-bottom: 20px;" onclick="exportExcel()">📊 Export Master CSV</button>
+        
+        <div class="admin-only" id="admin-logs-section">
+            <h4 style="color:var(--warning); margin: 20px 0 5px 0; font-size: 14px;">🔒 Access Monitoring</h4>
+            <div id="access-log-display" style="font-family:monospace; font-size:10px; height:300px; overflow-y:auto; background:rgba(0,0,0,0.2); padding:10px; border-radius:8px; border:1px solid var(--border);"></div>
         </div>
-        <button class="btn btn-primary" style="margin-top:20px" onclick="toggleMenu()">Close</button>
+        
+        <button class="btn btn-primary" style="margin-top:30px" onclick="toggleMenu()">Close Menu</button>
     </div>
 
     <div class="header-banner">
@@ -114,10 +126,10 @@
                 <div style="height: 280px;"><canvas id="effChart"></canvas></div>
             </div>
             <div class="panel admin-only" id="admin-form">
-                <h3 style="margin:0 0 15px 0; color:var(--accent)">Advanced Data Entry</h3>
+                <h3 style="margin:0 0 10px 0; color:var(--accent)">Data Entry Portal</h3>
                 <div class="input-stack">
                     <input type="date" id="f-date">
-                    <select id="f-shift"><option>Shift A</option><option>Shift B</option><option>Shift C</option></select>
+                    <select id="f-shift"><option>Day Shift</option><option>Night Shift</option></select>
                 </div>
                 <div class="input-stack">
                     <select id="f-line">
@@ -126,32 +138,34 @@
                     </select>
                     <select id="f-reason">
                         <option value="Normal">Normal Operation</option>
+                        <option value="No Operation">No Operation (Scheduled)</option>
                         <option value="Mechanical">Mechanical Failure</option>
                         <option value="Electrical">Electrical Issue</option>
                         <option value="Material">No Materials</option>
-                        <option value="QC">Quality Inspection</option>
+                        <option value="QC">Quality Check</option>
                         <option value="Changeover">Product Changeover</option>
                     </select>
                 </div>
                 <div class="input-stack">
-                    <input type="number" id="f-target" placeholder="Target Units">
-                    <input type="number" id="f-actual" placeholder="Actual Units">
+                    <input type="number" id="f-target" placeholder="Target">
+                    <input type="number" id="f-actual" placeholder="Actual">
                 </div>
                 <div class="input-stack">
-                    <input type="number" id="f-run" placeholder="Run Time (m)" value="480">
-                    <input type="number" id="f-down" placeholder="Down Time (m)" value="0">
+                    <input type="number" id="f-run" placeholder="RunTime(m)" value="480">
+                    <input type="number" id="f-down" placeholder="DownTime(m)" value="0">
                 </div>
-                <button class="btn btn-primary" onclick="saveData()">SAVE PRODUCTION DATA</button>
+                <textarea id="f-comment" placeholder="Jamming details / Machine trouble comments..." rows="2" style="margin-bottom:10px;"></textarea>
+                <button class="btn btn-primary" onclick="saveData()">TRANSMIT DATA</button>
             </div>
         </div>
 
         <div class="panel" style="margin-top:20px;">
-            <h3>Production Log Database</h3>
+            <h3>Master Production Database</h3>
             <div style="overflow-x:auto;">
                 <table id="log-table">
                     <thead>
                         <tr>
-                            <th>Date</th><th>Shift</th><th>Line</th><th>Target</th><th>Actual</th><th>Eff%</th><th>Reason</th><th class="admin-only">Action</th>
+                            <th>Date</th><th>Shift</th><th>Line</th><th>Target</th><th>Actual</th><th>Eff%</th><th>Reason</th><th>Issues/Comments</th><th class="admin-only">Action</th>
                         </tr>
                     </thead>
                     <tbody id="log-body"></tbody>
@@ -163,7 +177,8 @@
     <div class="fab" onclick="toggleMenu()">⚙️</div>
 
     <script>
-        let masterData = JSON.parse(localStorage.getItem('bl_v6_data')) || [];
+        let masterData = JSON.parse(localStorage.getItem('bl_v62_data')) || [];
+        let accessLogs = JSON.parse(localStorage.getItem('bl_v62_access')) || [];
         let isEngineer = false;
 
         function authorize() {
@@ -185,10 +200,20 @@
                     isEngineer = true;
                     document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
                 }
+                logAccess(user.name);
                 document.getElementById('portal-overlay').style.display = 'none';
                 initCharts();
                 refreshUI();
-            } else { alert("Invalid Credentials"); }
+            } else { alert("Access Denied"); }
+        }
+
+        function logAccess(user) {
+            const logEntry = `${new Date().toLocaleTimeString()} - ${user}`;
+            accessLogs.unshift(logEntry);
+            localStorage.setItem('bl_v62_access', JSON.stringify(accessLogs.slice(0, 50)));
+            if(isEngineer) {
+                document.getElementById('access-log-display').innerHTML = accessLogs.map(l => `<div style="border-bottom:1px solid #333; padding:4px 0">${l}</div>`).join('');
+            }
         }
 
         setInterval(() => {
@@ -205,10 +230,16 @@
                 actual: parseInt(document.getElementById('f-actual').value) || 0,
                 run: parseInt(document.getElementById('f-run').value) || 0,
                 down: parseInt(document.getElementById('f-down').value) || 0,
-                reason: document.getElementById('f-reason').value
+                reason: document.getElementById('f-reason').value,
+                comment: document.getElementById('f-comment').value
             };
             masterData.unshift(entry);
-            localStorage.setItem('bl_v6_data', JSON.stringify(masterData));
+            localStorage.setItem('bl_v62_data', JSON.stringify(masterData));
+            
+            // Clear inputs
+            document.getElementById('f-target').value = '';
+            document.getElementById('f-actual').value = '';
+            document.getElementById('f-comment').value = '';
             refreshUI();
         }
 
@@ -226,6 +257,7 @@
                 return `<tr>
                     <td>${r.date}</td><td>${r.shift}</td><td>${r.line}</td><td>${r.target}</td><td>${r.actual}</td>
                     <td style="color:${color}; font-weight:bold">${eff}%</td><td>${r.reason}</td>
+                    <td style="font-style:italic; opacity:0.8">${r.comment || '-'}</td>
                     <td class="admin-only" style="display:${isEngineer ? 'table-cell' : 'none'}">
                         <button onclick="deleteRow(${r.id})" style="color:var(--danger); border:none; background:none; cursor:pointer">🗑</button>
                     </td>
@@ -240,18 +272,12 @@
             }, {a:0, t:0, r:0, d:0});
             
             const effVal = totals.t > 0 ? (totals.a/totals.t)*100 : 0;
-            
             document.getElementById('kpi-yield').innerText = totals.a.toLocaleString();
             document.getElementById('kpi-eff').innerText = effVal.toFixed(1) + '%';
             document.getElementById('kpi-run').innerText = (totals.r / 60).toFixed(1) + 'h';
             document.getElementById('kpi-down').innerText = totals.d + 'm';
 
-            // DYNAMIC KPI STATUS COLORS
-            const cardEff = document.getElementById('card-eff');
-            cardEff.className = 'kpi-card ' + (effVal >= 90 ? 'status-good' : (effVal >= 60 ? 'status-warn' : 'status-crit'));
-            
-            const cardDown = document.getElementById('card-down');
-            cardDown.className = 'kpi-card ' + (totals.d < 30 ? 'status-good' : (totals.d < 60 ? 'status-warn' : 'status-crit'));
+            document.getElementById('card-eff').className = 'kpi-card ' + (effVal >= 90 ? 'status-good' : (effVal >= 60 ? 'status-warn' : 'status-crit'));
         }
 
         let charts = {};
@@ -259,38 +285,33 @@
             const cfg = { responsive: true, maintainAspectRatio: false };
             charts.prod = new Chart(document.getElementById('prodChart'), {
                 type: 'line',
-                data: { labels: [], datasets: [
-                    { label: 'Actual', borderColor: '#0ea5e9', data: [] },
-                    { label: 'Target', borderColor: '#8b5cf6', data: [], borderDash: [5,5] }
-                ]}, options: cfg
+                data: { labels: [], datasets: [{ label: 'Actual', borderColor: '#0ea5e9', data: [] }, { label: 'Target', borderColor: '#8b5cf6', data: [], borderDash: [5,5] }]},
+                options: cfg
             });
             charts.pareto = new Chart(document.getElementById('paretoChart'), {
                 type: 'bar',
-                data: { labels: [], datasets: [{ label: 'Minutes Lost', backgroundColor: '#ef4444', data: [] }] },
+                data: { labels: [], datasets: [{ label: 'Minutes Down', backgroundColor: '#ef4444', data: [] }]},
                 options: cfg
             });
             charts.eff = new Chart(document.getElementById('effChart'), {
                 type: 'bar',
-                data: { labels: [], datasets: [{ label: 'Efficiency %', backgroundColor: '#f59e0b', data: [] }] },
-                options: { ...cfg, scales: { y: { max: 100 } } }
+                data: { labels: [], datasets: [{ label: 'Eff %', backgroundColor: '#f59e0b', data: [] }]},
+                options: { ...cfg, scales: { y: { max: 100 } }}
             });
         }
 
         function updateCharts() {
             if(!charts.prod) return;
             const last10 = [...masterData].reverse().slice(-10);
-            const labels = last10.map(r => r.line + " (" + r.shift.slice(-1) + ")");
+            const labels = last10.map(r => r.line + " (" + (r.shift === 'Day Shift' ? 'D' : 'N') + ")");
             
             charts.prod.data.labels = labels;
             charts.prod.data.datasets[0].data = last10.map(r => r.actual);
             charts.prod.data.datasets[1].data = last10.map(r => r.target);
             charts.prod.update();
 
-            // PARETO REASON LOGIC
             const reasonTotals = {};
-            masterData.forEach(r => {
-                if(r.down > 0) reasonTotals[r.reason] = (reasonTotals[r.reason] || 0) + r.down;
-            });
+            masterData.forEach(r => { if(r.down > 0) reasonTotals[r.reason] = (reasonTotals[r.reason] || 0) + r.down; });
             charts.pareto.data.labels = Object.keys(reasonTotals);
             charts.pareto.data.datasets[0].data = Object.values(reasonTotals);
             charts.pareto.update();
@@ -300,25 +321,33 @@
             charts.eff.update();
         }
 
-        function toggleMenu() { document.getElementById('system-menu').classList.toggle('active'); }
+        function toggleMenu() {
+            const menu = document.getElementById('system-menu');
+            const overlay = document.getElementById('menu-overlay');
+            const isActive = menu.classList.toggle('active');
+            overlay.style.display = isActive ? 'block' : 'none';
+        }
+
         function toggleTheme() { document.body.classList.toggle('light-mode'); }
+
         function deleteRow(id) {
-            if(confirm("Delete record?")) {
+            if(confirm("Delete this entry?")) {
                 masterData = masterData.filter(r => r.id !== id);
-                localStorage.setItem('bl_v6_data', JSON.stringify(masterData));
+                localStorage.setItem('bl_v62_data', JSON.stringify(masterData));
                 refreshUI();
             }
         }
+
         function exportExcel() {
-            let csv = "Date,Shift,Line,Target,Actual,Eff %,Down(m),Reason\n";
+            let csv = "Date,Shift,Line,Target,Actual,Eff%,Reason,Comments\n";
             masterData.forEach(r => {
                 const eff = r.target > 0 ? ((r.actual/r.target)*100).toFixed(1) : 0;
-                csv += `${r.date},${r.shift},${r.line},${r.target},${r.actual},${eff}%,${r.down},${r.reason}\n`;
+                csv += `${r.date},${r.shift},${r.line},${r.target},${r.actual},${eff}%,${r.reason},"${r.comment}"\n`;
             });
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.href = url; a.download = 'Bodyline_Pro_Report.csv'; a.click();
+            a.href = url; a.download = 'Bodyline_Production_Master.csv'; a.click();
         }
     </script>
 </body>
