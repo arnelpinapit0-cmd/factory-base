@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bodyline Pro | v12.6 Master Controls</title>
+    <title>Bodyline Pro | v12.7 Analytics Master</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -18,26 +18,24 @@
         }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; transition: 0.3s; overflow-x: hidden; }
 
-        .cloud-status { position: fixed; top: 10px; right: 10px; font-size: 11px; display: flex; align-items: center; gap: 8px; background: var(--surface); padding: 6px 12px; border-radius: 20px; z-index: 5000; border: 1px solid var(--border); font-weight: bold; }
+        .cloud-status { position: fixed; top: 10px; right: 10px; font-size: 11px; display: flex; align-items: center; gap: 8px; background: var(--surface); padding: 8px 16px; border-radius: 20px; z-index: 5000; border: 1px solid var(--border); font-weight: bold; }
         .status-dot { width: 10px; height: 10px; border-radius: 50%; }
         .dot-offline { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
         .dot-online { background: var(--success); box-shadow: 0 0 8px var(--success); }
 
-        #portal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 10000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
-        .auth-card { background: #18181b; padding: 40px; border-radius: 16px; border: 1px solid var(--accent); width: 320px; text-align: center; }
+        #portal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 10000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
+        .auth-card { background: #18181b; padding: 40px; border-radius: 20px; border: 1px solid var(--accent); width: 320px; text-align: center; }
         .auth-card input { width: 100%; padding: 15px; background: #000; border: 1px solid var(--border); color: var(--success); font-size: 20px; text-align: center; border-radius: 8px; margin: 20px 0; letter-spacing: 5px; }
 
-        .header-banner { text-align: center; padding: 25px 15px 15px 15px; background: var(--surface); border-bottom: 2px solid var(--accent); }
-        .main-content { padding: 0 15px 30px 15px; max-width: 1600px; margin: auto; }
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 15px 0; }
-        .kpi-card { background: var(--surface); border: 1px solid var(--border); padding: 15px; border-radius: 10px; text-align: center; }
+        .header-banner { text-align: center; padding: 20px; background: var(--surface); border-bottom: 2px solid var(--accent); }
+        .main-content { padding: 15px; max-width: 1800px; margin: auto; }
         
         .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
-        @media (max-width: 900px) { .chart-row { grid-template-columns: 1fr; } }
+        @media (max-width: 1100px) { .chart-row { grid-template-columns: 1fr; } }
         .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 15px; }
 
-        input, select, textarea { width: 100%; padding: 10px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 6px; box-sizing: border-box; margin-bottom: 5px; }
-        .btn { padding: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; }
+        input, select, textarea { width: 100%; padding: 10px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 6px; box-sizing: border-box; margin-bottom: 5px; font-family: inherit;}
+        .btn { padding: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .btn-primary { background: var(--accent); color: white; width: 100%; }
 
         table { width: 100%; border-collapse: collapse; font-size: 11px; }
@@ -54,7 +52,7 @@
         #system-menu.active { right: 0; visibility: visible; }
         .menu-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; display: none; }
 
-        #prod-notepad { width: 100%; height: 150px; background: #000; color: #10b981; font-family: 'Courier New', monospace; padding: 10px; border: 1px solid var(--border); border-radius: 4px; resize: none; margin-top: 10px;}
+        #prod-notepad { width: 100%; height: 120px; background: #000; color: #10b981; font-family: 'Courier New', monospace; padding: 10px; border: 1px solid var(--border); border-radius: 4px; resize: none; margin-top: 10px;}
         .action-cell { display: flex; gap: 8px; }
 
         @media print {
@@ -73,10 +71,10 @@
 
     <div id="portal-overlay">
         <div class="auth-card">
-            <h2 style="margin:0; color:var(--accent)">BODYLINE LOGIN</h2>
-            <p style="font-size: 12px; color:var(--text-dim)">v12.6 Stable Control</p>
-            <input type="password" id="access-code" placeholder="PIN CODE">
-            <button class="btn btn-primary" id="login-btn" onclick="authorize()" style="padding: 15px; font-size: 16px;">SECURE LOGIN</button>
+            <h2 style="margin:0; color:var(--accent)">BODYLINE PRO</h2>
+            <p style="font-size: 11px; color:var(--text-dim)">v12.7 Analytics Master</p>
+            <input type="password" id="access-code" placeholder="PIN">
+            <button class="btn btn-primary" id="login-btn" onclick="authorize()">SECURE LOGIN</button>
         </div>
     </div>
 
@@ -89,42 +87,44 @@
     </div>
 
     <div class="main-content">
-        <div class="kpi-grid">
-            <div class="kpi-card"><small>Yield</small><div id="kpi-yield" style="font-size:22px; font-weight:bold;">0</div></div>
-            <div class="kpi-card"><small>Efficiency</small><div id="kpi-eff" style="font-size:22px; font-weight:bold;">0%</div></div>
-            <div class="kpi-card"><small>Quality</small><div id="kpi-quality" style="font-size:22px; font-weight:bold;">0%</div></div>
-            <div class="kpi-card"><small>Downtime</small><div id="kpi-down" style="font-size:22px; font-weight:bold;">0 min.</div></div>
+        <div class="chart-row">
+            <div class="panel"><h3 style="margin:0 0 10px 0; font-size:12px;">Production Trend</h3><div style="height: 200px;"><canvas id="prodChart"></canvas></div></div>
+            <div class="panel"><h3 style="margin:0 0 10px 0; font-size:12px;">Total Plant Utilization</h3><div style="height: 200px;"><canvas id="utilChart"></canvas></div></div>
         </div>
 
         <div class="chart-row">
-            <div class="panel"><h3 style="margin:0 0 5px 0; font-size:12px;">Trend</h3><div style="height: 200px;"><canvas id="prodChart"></canvas></div></div>
-            <div class="panel"><h3 style="margin:0 0 5px 0; font-size:12px;">Utilization</h3><div style="height: 200px;"><canvas id="utilChart"></canvas></div></div>
+            <div class="panel"><h3 style="margin:0 0 10px 0; font-size:12px; color: var(--warning);">Day Shift Efficiency (%)</h3><div style="height: 200px;"><canvas id="effChartDay"></canvas></div></div>
+            <div class="panel"><h3 style="margin:0 0 10px 0; font-size:12px; color: var(--accent);">Night Shift Efficiency (%)</h3><div style="height: 200px;"><canvas id="effChartNight"></canvas></div></div>
+        </div>
+
+        <div class="chart-row">
+            <div class="panel" style="grid-column: span 2;"><h3 style="margin:0 0 10px 0; font-size:12px; text-align: center;">Total Output: Day Shift vs Night Shift</h3><div style="height: 200px;"><canvas id="shiftCompChart"></canvas></div></div>
         </div>
 
         <div class="chart-row admin-only" id="admin-form-container">
-            <div class="panel" id="admin-form" style="grid-column: span 2;">
+            <div class="panel" id="admin-form" style="grid-column: span 2; border: 1px solid var(--accent);">
                 <h3 style="margin:0 0 10px 0; color:var(--accent); font-size: 14px;">Data Acquisition</h3>
                 <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
                     <input type="date" id="f-date">
                     <select id="f-shift"><option>Day Shift</option><option>Night Shift</option></select>
                     <select id="f-line"><option>Line 1</option><option>Line 2</option><option>Line 3</option><option>Line 4</option><option>Line 5</option><option>Line 6</option></select>
-                    <select id="f-reason"><option>Normal</option><option>Mechanical</option><option>Electrical</option><option>Material</option></select>
+                    <select id="f-reason"><option>Normal</option><option>Mechanical</option><option>Electrical</option><option>Material</option><option>QC</option></select>
                     <input type="number" id="f-target" placeholder="Target">
                     <input type="number" id="f-actual" placeholder="Actual">
                     <input type="number" id="f-run" value="480">
-                    <input type="number" id="f-down" placeholder="DownTime">
+                    <input type="number" id="f-down" placeholder="Down (min)">
                 </div>
-                <textarea id="f-comment" placeholder="Jamming details / Actions taken..."></textarea>
-                <button class="btn btn-primary" id="transmit-btn" onclick="saveData()" style="margin-top:10px;">TRANSMIT RECORD</button>
+                <textarea id="f-comment" placeholder="Troubleshooting / Jamming Notes..." rows="2" style="margin-top:5px;"></textarea>
+                <button class="btn btn-primary" id="transmit-btn" onclick="saveData()" style="margin-top:5px;">TRANSMIT RECORD</button>
             </div>
         </div>
 
         <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px;">
             <div class="panel">
-                <h3 style="margin:0 0 10px 0;">Live Master Log</h3>
+                <h3 style="margin:0 0 10px 0;">Master Log Database</h3>
                 <div style="overflow-y:auto; height: 350px;">
                     <table id="log-table">
-                        <thead><tr><th>Date</th><th>Line</th><th>Actual</th><th>Eff%</th><th>Down</th><th>Comments</th><th class="admin-only">Action</th></tr></thead>
+                        <thead><tr><th>Date</th><th>Shift</th><th>Line</th><th>Actual</th><th>Eff%</th><th>Down</th><th>Comments</th><th class="admin-only">Action</th></tr></thead>
                         <tbody id="log-body"></tbody>
                     </table>
                 </div>
@@ -148,13 +148,13 @@
         <h3 style="color: var(--accent);">System Settings</h3>
         <button class="btn" style="width:100%; margin-bottom:10px; background: var(--border); color: var(--text);" onclick="toggleTheme()">🌓 Toggle Mode</button>
         <button class="btn" style="width:100%; margin-bottom:10px; background: var(--success); color: white;" onclick="exportCSV()">📊 Export Excel</button>
-        <button class="btn" style="width:100%; margin-bottom:20px; background: var(--accent); color: white;" onclick="window.print()">🖨️ Print PDF</button>
+        <button class="btn" style="width:100%; margin-bottom:15px; background: var(--accent); color: white;" onclick="window.print()">🖨️ Print PDF Report</button>
         
         <h4 style="color:var(--accent); margin: 10px 0 5px 0;">📝 Production Notepad</h4>
-        <textarea id="prod-notepad" placeholder="Reminders..." oninput="saveNotes()"></textarea>
+        <textarea id="prod-notepad" placeholder="Write shift reminders here..." oninput="saveNotes()"></textarea>
 
         <div id="admin-monitor-section" style="display:none;">
-            <h4 style="color:var(--warning); margin: 10px 0 5px 0;">🔒 Security: Access Logs</h4>
+            <h4 style="color:var(--warning); margin: 20px 0 5px 0;">🔒 Security: Access Logs</h4>
             <div id="access-log-display" style="font-family:monospace; font-size:10px; height:150px; overflow-y:auto; background:rgba(0,0,0,0.1); padding:10px;"></div>
         </div>
         <button class="btn btn-primary" style="margin-top:20px" onclick="toggleMenu()">Close Menu</button>
@@ -181,17 +181,15 @@
                     currentUser = data ? data.user_name : "Engr. Pinapit";
                     isEngineer = data ? (data.role === 'Admin') : true;
                     document.getElementById('user-display').innerText = currentUser;
-                    
                     if(isEngineer) {
                         document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'table-cell');
                         document.getElementById('admin-form-container').style.display = 'block';
                         document.getElementById('admin-monitor-section').style.display = 'block';
                     }
-                    
                     document.getElementById('portal-overlay').style.display = 'none';
                     loadNotes(); initCharts(); await fetchData(); fetchComments(); setupRealtime(); recordAccess(currentUser);
                 } else { alert("Invalid PIN."); }
-            } catch (err) { alert("Error connecting."); }
+            } catch (err) { alert("Access error."); }
             btn.innerText = "SECURE LOGIN";
         }
 
@@ -250,32 +248,24 @@
                 reason: document.getElementById('f-reason').value, comment: document.getElementById('f-comment').value,
                 created_at: new Date().toISOString()
             };
-            await sb.from('production_logs').insert([entry]);
-            btn.innerText = "SUCCESS!"; setTimeout(() => { btn.innerText = "TRANSMIT RECORD"; }, 2000);
+            const { error } = await sb.from('production_logs').insert([entry]);
+            if(!error) { await fetchData(); btn.innerText = "SUCCESS!"; setTimeout(() => { btn.innerText = "TRANSMIT RECORD"; }, 2000); }
             document.getElementById('f-actual').value = ''; document.getElementById('f-down').value = '';
         }
 
         function renderTable(data) {
             document.getElementById('log-body').innerHTML = data.slice(0, 30).map(r => {
                 const eff = r.target > 0 ? ((r.actual/r.target)*100).toFixed(1) : 0;
-                let actionBtns = isEngineer ? `
-                    <div class="action-cell">
-                        <button onclick="editLog(${r.id}, ${r.actual})" style="background:none; border:none; cursor:pointer;" title="Edit Actual">✏️</button>
-                        <button onclick="deleteLog(${r.id})" style="background:none; border:none; color:var(--danger); cursor:pointer;" title="Delete Log">🗑</button>
-                    </div>` : "";
-                return `<tr><td>${r.date}</td><td>${r.line}</td><td>${r.actual}</td><td>${eff}%</td><td>${r.down}m</td><td style="font-size:10px; opacity:0.8;">${r.comment || ''}</td><td class="admin-only">${actionBtns}</td></tr>`;
+                let actionBtns = isEngineer ? `<div class="action-cell">
+                    <button onclick="editLog(${r.id}, ${r.actual})" style="background:none; border:none; cursor:pointer;">✏️</button>
+                    <button onclick="deleteLog(${r.id})" style="background:none; border:none; color:var(--danger); cursor:pointer;">🗑️</button>
+                </div>` : "";
+                return `<tr><td>${r.date}</td><td>${r.shift[0]}</td><td>${r.line}</td><td>${r.actual}</td><td>${eff}%</td><td>${r.down}m</td><td style="font-size:10px; opacity:0.8;">${r.comment || ''}</td><td class="admin-only">${actionBtns}</td></tr>`;
             }).join('');
         }
 
-        async function deleteLog(id) { if(confirm("Permanently delete this log?")) { await sb.from('production_logs').delete().eq('id', id); fetchData(); } }
-        
-        async function editLog(id, currentActual) {
-            const newVal = prompt("Enter corrected 'Actual' value:", currentActual);
-            if(newVal !== null) {
-                await sb.from('production_logs').update({ actual: parseInt(newVal) }).eq('id', id);
-                fetchData();
-            }
-        }
+        async function deleteLog(id) { if(confirm("Delete log?")) { await sb.from('production_logs').delete().eq('id', id); fetchData(); } }
+        async function editLog(id, cur) { let n = prompt("Enter Correct Actual:", cur); if(n) { await sb.from('production_logs').update({actual:parseInt(n)}).eq('id', id); fetchData(); } }
 
         function updateKPIs(data) {
             const t = data.reduce((acc, r) => { acc.a += r.actual; acc.t += r.target; acc.d += r.down; return acc; }, {a:0, t:0, d:0});
@@ -285,9 +275,12 @@
         }
 
         function initCharts() {
-            const cfg = { responsive: true, maintainAspectRatio: false };
+            const cfg = { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } };
             charts.prod = new Chart(document.getElementById('prodChart'), { type: 'line', data: { labels: [], datasets: [{ label: 'Actual', borderColor: '#0ea5e9', data: [] }, { label: 'Target', borderColor: '#8b5cf6', data: [], borderDash:[5,5] }]}, options: cfg });
             charts.util = new Chart(document.getElementById('utilChart'), { type: 'doughnut', data: { labels: ['Run', 'Down'], datasets: [{ data: [0, 0], backgroundColor: ['#10b981', '#ef4444'], cutout:'70%' }]}, options: cfg });
+            charts.effDay = new Chart(document.getElementById('effChartDay'), { type: 'bar', data: { labels: [], datasets: [{ label: 'Eff %', data: [] }]}, options: { ...cfg, scales: { y: { max: 100 } }, plugins: { legend: { display: false } } } });
+            charts.effNight = new Chart(document.getElementById('effChartNight'), { type: 'bar', data: { labels: [], datasets: [{ label: 'Eff %', data: [] }]}, options: { ...cfg, scales: { y: { max: 100 } }, plugins: { legend: { display: false } } } });
+            charts.shiftComp = new Chart(document.getElementById('shiftCompChart'), { type: 'bar', data: { labels: ['Day Shift', 'Night Shift'], datasets: [{ label: 'Total Output', backgroundColor: ['#f59e0b', '#0ea5e9'], data: [0, 0] }]}, options: { ...cfg, indexAxis: 'y' } });
         }
 
         function updateCharts(data) {
@@ -297,8 +290,28 @@
             charts.prod.data.datasets[0].data = plotData.map(r => r.actual);
             charts.prod.data.datasets[1].data = plotData.map(r => r.target);
             charts.prod.update();
+
             charts.util.data.datasets[0].data = [data.reduce((s,r)=>s+(r.run||0),0), data.reduce((s,r)=>s+(r.down||0),0)];
             charts.util.update();
+
+            const lines = ["Line 1", "Line 2", "Line 3", "Line 4", "Line 5", "Line 6"];
+            const updateShift = (chart, shift) => {
+                const vals = lines.map(l => {
+                    const rs = data.filter(x => x.line === l && x.shift === shift);
+                    const a = rs.reduce((s,x)=>s+x.actual,0), t = rs.reduce((s,x)=>s+x.target,0);
+                    return t > 0 ? (a/t*100) : 0;
+                });
+                chart.data.labels = lines; chart.data.datasets[0].data = vals;
+                chart.data.datasets[0].backgroundColor = vals.map(e => e < 65 ? '#ef4444' : (e < 80 ? '#f59e0b' : '#10b981'));
+                chart.update();
+            }
+            updateShift(charts.effDay, "Day Shift"); updateShift(charts.effNight, "Night Shift");
+
+            charts.shiftComp.data.datasets[0].data = [
+                data.filter(r => r.shift === "Day Shift").reduce((s,r)=>s+r.actual,0),
+                data.filter(r => r.shift === "Night Shift").reduce((s,r)=>s+r.actual,0)
+            ];
+            charts.shiftComp.update();
         }
 
         function saveNotes() { localStorage.setItem('bodyline_notes', document.getElementById('prod-notepad').value); }
@@ -310,7 +323,7 @@
             rawCloudData.forEach(r => { csv += `${r.date},${r.shift},${r.line},${r.target},${r.actual},${r.down},"${r.comment}"\n`; });
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.href = url; a.download = 'Production_Log.csv'; a.click();
+            const a = document.createElement('a'); a.href = url; a.download = 'Bodyline_Production.csv'; a.click();
         }
         setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleString(); }, 1000);
     </script>
