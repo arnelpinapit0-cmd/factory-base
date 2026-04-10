@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bodyline Pro | Cloud Sync HMI v9.2</title>
+    <title>Bodyline Pro | Enterprise Edition v10.0</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -95,9 +95,9 @@
     <div id="portal-overlay">
         <div class="auth-card">
             <h2 style="margin:0; color:var(--accent)">BODYLINE LOGIN</h2>
-            <p style="font-size: 12px; color:var(--text-dim)">v9.2 Dashboard Sync</p>
+            <p style="font-size: 12px; color:var(--text-dim)">v10.0 Enterprise Secure Sync</p>
             <input type="password" id="access-code" placeholder="PIN CODE">
-            <button class="btn btn-primary" onclick="authorize()" style="padding: 15px; font-size: 16px;">ENTER</button>
+            <button class="btn btn-primary" id="login-btn" onclick="authorize()" style="padding: 15px; font-size: 16px;">SECURE LOGIN</button>
         </div>
     </div>
 
@@ -157,18 +157,14 @@
                     <select id="f-line"><option>Line 1</option><option>Line 2</option><option>Line 3</option><option>Line 4</option><option>Line 5</option><option>Line 6</option></select>
                     <select id="f-reason"><option>Normal</option><option>Mechanical</option><option>Electrical</option><option>Material</option><option>QC</option><option>No Operation</option></select>
                     
-                    <input type="number" id="f-target" placeholder="Target">
-                    <input type="number" id="f-actual" placeholder="Actual">
+                    <input type="number" id="f-target" placeholder="Target" min="0">
+                    <input type="number" id="f-actual" placeholder="Actual" min="0">
                     
-                    <select id="f-run-category">
-                        <option>Regular Time</option>
-                        <option>Overtime</option>
-                        <option>Holiday / Weekend</option>
-                    </select>
-                    <input type="number" id="f-run" placeholder="Run Time (min.)" value="480">
+                    <select id="f-run-category"><option>Regular Time</option><option>Overtime</option><option>Holiday / Weekend</option></select>
+                    <input type="number" id="f-run" placeholder="Run Time (min.)" value="480" min="0">
                     
-                    <input type="number" step="any" id="f-rejects" placeholder="Rejects (kg.)">
-                    <input type="number" id="f-down" placeholder="Downtime (min.)">
+                    <input type="number" step="any" id="f-rejects" placeholder="Rejects (kg.)" min="0">
+                    <input type="number" id="f-down" placeholder="Downtime (min.)" min="0">
                 </div>
                 <textarea id="f-comment" placeholder="Jamming details or troubleshooting notes..." rows="2"></textarea>
                 <button class="btn btn-primary" onclick="saveData()" style="margin-top:5px; padding:12px;">TRANSMIT RECORD</button>
@@ -207,7 +203,6 @@
     </div>
 
     <script>
-        // SUPABASE CONNECTION
         const SB_URL = "https://ywjnbslxdssyriokcdws.supabase.co";
         const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3am5ic2x4ZHNzeXJpb2tjZHdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDg1MDUsImV4cCI6MjA5MTIyNDUwNX0.sNFCBZoSwZS0b5eU6iBmLeTt5ru7dP8G2GYJ9hrxAFg";
         const sb = supabase.createClient(SB_URL, SB_KEY);
@@ -219,25 +214,23 @@
         let charts = {};
         let currentUser = "";
 
-        function authorize() {
+        // SECURE LOGIN LOGIC
+        async function authorize() {
             const pin = document.getElementById('access-code').value;
-            const roles = {
-                "122022": { name: "Engr. Pinapit (Admin)", admin: true },
-                "882041": { name: "Sir Melvin", admin: false },
-                "559312": { name: "Boss Raul", admin: false },
-                "440192": { name: "Production Dept", admin: false },
-                "773055": { name: "Quality Control", admin: false },
-                "992841": { name: "Engineering Dept", admin: false },
-                "101020": { name: "Guest Viewer", admin: false }
-            };
+            const btn = document.getElementById('login-btn');
+            btn.innerText = "AUTHENTICATING...";
 
-            if(roles[pin]) {
-                const user = roles[pin];
-                currentUser = user.name;
+            // 1. Ask Supabase if this PIN exists in the new 'user_roles' table
+            const { data, error } = await sb.from('user_roles').select('*').eq('pin', pin).single();
+
+            if(data) {
+                // Secure Login Success!
+                currentUser = data.user_name;
+                isEngineer = (data.role === 'Admin');
+
                 document.getElementById('user-display').innerText = currentUser;
                 
-                if(user.admin) {
-                    isEngineer = true;
+                if(isEngineer) {
                     document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
                     document.getElementById('admin-form').style.gridColumn = "span 1";
                 } else {
@@ -251,9 +244,23 @@
                 initCharts();
                 fetchData();
                 setupRealtime();
-                
                 setInterval(processDelayAndRender, 10000); 
-            } else { alert("Invalid PIN. Please try again."); }
+
+            } else {
+                // FALLBACK: Just in case you haven't created the table yet, keep your Admin PIN working so you don't get locked out.
+                if(pin === "122022") {
+                    alert("WARNING: Using Fallback Admin PIN. Please create the 'user_roles' table in Supabase to secure your system.");
+                    currentUser = "Engr. Pinapit (Fallback)";
+                    isEngineer = true;
+                    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
+                    document.getElementById('user-display').innerText = currentUser;
+                    document.getElementById('portal-overlay').style.display = 'none';
+                    initCharts(); fetchData(); setupRealtime();
+                } else {
+                    alert("Invalid PIN or Database Table Missing. Please contact Admin.");
+                }
+            }
+            btn.innerText = "SECURE LOGIN";
         }
 
         async function recordGlobalAccess(name) {
@@ -303,7 +310,8 @@
         }
 
         async function fetchData() {
-            const { data, error } = await sb.from('production_logs').select('*').order('created_at', {ascending:false});
+            // HIGH PERFORMANCE LIMIT: Only fetch the 500 most recent rows to prevent lag
+            const { data, error } = await sb.from('production_logs').select('*').order('created_at', {ascending:false}).limit(500);
             if(!error && data) {
                 rawCloudData = data;
                 processDelayAndRender();
@@ -327,16 +335,22 @@
             const btn = document.querySelector('.btn-primary');
             btn.innerText = "TRANSMITTING...";
 
+            // Ensure we don't accidentally send empty strings instead of 0
+            const tgt = parseInt(document.getElementById('f-target').value) || 0;
+            const act = parseInt(document.getElementById('f-actual').value) || 0;
+            const rej = parseFloat(document.getElementById('f-rejects').value) || 0;
+            const dwn = parseInt(document.getElementById('f-down').value) || 0;
+
             const entry = {
                 date: document.getElementById('f-date').value || new Date().toISOString().split('T')[0],
                 shift: document.getElementById('f-shift').value,
                 line: document.getElementById('f-line').value,
-                target: parseInt(document.getElementById('f-target').value) || 0,
-                actual: parseInt(document.getElementById('f-actual').value) || 0,
+                target: Math.max(0, tgt), // Failsafe for negatives
+                actual: Math.max(0, act),
                 run_category: document.getElementById('f-run-category').value,
-                run: parseInt(document.getElementById('f-run').value) || 0,
-                rejects: parseFloat(document.getElementById('f-rejects').value) || 0,
-                down: parseInt(document.getElementById('f-down').value) || 0,
+                run: Math.max(0, parseInt(document.getElementById('f-run').value) || 0),
+                rejects: Math.max(0, rej),
+                down: Math.max(0, dwn),
                 reason: document.getElementById('f-reason').value,
                 comment: document.getElementById('f-comment').value,
                 created_at: new Date().toISOString()
@@ -353,7 +367,6 @@
                 alert("DATABASE ERROR: " + error.message);
                 btn.innerText = "TRANSMIT RECORD";
             } else {
-                // Clear the boxes that change often
                 document.getElementById('f-actual').value = '';
                 document.getElementById('f-down').value = '';
                 document.getElementById('f-rejects').value = '';
@@ -493,6 +506,34 @@
             charts.pareto.update();
         }
 
+        // REAL CSV EXPORT FUNCTION
+        function exportCSV() {
+            if (displayData.length === 0) {
+                alert("No data available to export.");
+                return;
+            }
+
+            let csv = "Date,Shift,Line,Target,Actual,Rejects (kg),Downtime (min),Efficiency %,Reason,Comments\n";
+            
+            displayData.forEach(r => {
+                const eff = r.target > 0 ? ((r.actual/r.target)*100).toFixed(1) : 0;
+                // Clean comments to prevent commas from breaking the CSV columns
+                const safeComment = r.comment ? r.comment.replace(/,/g, " ") : "";
+                
+                csv += `${r.date},${r.shift},${r.line},${r.target},${r.actual},${r.rejects || 0},${r.down || 0},${eff}%,${r.reason},"${safeComment}"\n`;
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; 
+            a.download = `Bodyline_Production_Export_${new Date().toISOString().split('T')[0]}.csv`; 
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
         function toggleMenu() { 
             const menu = document.getElementById('system-menu');
             const overlay = document.getElementById('menu-overlay');
@@ -502,7 +543,6 @@
         function toggleTheme() { document.body.classList.toggle('light-mode'); }
         async function deleteRow(id) { if(confirm("Delete?")) { await sb.from('production_logs').delete().eq('id', id); fetchData(); } }
         setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleString(); }, 1000);
-        function exportCSV() { alert("Excel extraction ready."); }
     </script>
 </body>
 </html>
