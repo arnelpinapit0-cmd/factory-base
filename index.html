@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bodyline Pro | Enterprise Edition v10.0</title>
+    <title>Bodyline Pro | Enterprise Edition v11.0</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -19,12 +19,7 @@
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; transition: 0.3s; overflow-x: hidden; }
 
         /* ANDON NOTIFICATION BANNER */
-        #andon-banner { 
-            display: none; background: var(--danger); color: white; text-align: center; 
-            padding: 12px; font-weight: 900; letter-spacing: 3px; font-size: 14px;
-            animation: blinker 1s linear infinite; position: sticky; top: 0; z-index: 6000;
-            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.5);
-        }
+        #andon-banner { display: none; background: var(--danger); color: white; text-align: center; padding: 12px; font-weight: 900; letter-spacing: 3px; font-size: 14px; animation: blinker 1s linear infinite; position: sticky; top: 0; z-index: 6000; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.5); }
         @keyframes blinker { 50% { opacity: 0.7; background: #b91c1c; } }
 
         /* CLOUD CONNECTION STATUS */
@@ -56,8 +51,9 @@
         @media (max-width: 900px) { .chart-row { grid-template-columns: 1fr; } }
         .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 15px; }
 
-        /* FORM */
-        input, select, textarea { width: 100%; padding: 10px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 6px; box-sizing: border-box; margin-bottom: 5px; }
+        /* FORM & INPUTS */
+        input, select, textarea { width: 100%; padding: 10px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 6px; box-sizing: border-box; margin-bottom: 5px; font-family: inherit; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
         .btn { padding: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s;}
         .btn-primary { background: var(--accent); color: white; width: 100%; }
         .btn-primary:hover { background: #0284c7; }
@@ -67,17 +63,21 @@
         td { padding: 8px; border-bottom: 1px solid var(--border); }
         .admin-only { display: none; }
 
+        /* CHAT BOX */
+        .chat-container { height: 250px; overflow-y: auto; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-bottom: 10px; font-size: 12px; display: flex; flex-direction: column; gap: 8px; }
+        .chat-msg { padding: 8px; border-radius: 6px; background: rgba(255,255,255,0.02); border-left: 3px solid var(--accent); }
+        .chat-msg.admin-msg { border-left-color: var(--warning); background: rgba(245, 158, 11, 0.05); }
+
         /* SETTINGS MENU & FAB */
         #system-menu { position: fixed; top: 0; right: -400px; width: 350px; height: 100%; background: var(--surface); border-left: 2px solid var(--accent); z-index: 2001; transition: 0.4s; padding: 25px; box-sizing: border-box; visibility: hidden; box-shadow: -10px 0 30px rgba(0,0,0,0.5); overflow-y: auto;}
         #system-menu.active { right: 0; visibility: visible; }
-        
         .fab { position: fixed; bottom: 30px; right: 30px; padding: 15px 25px; background: var(--accent); border-radius: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1000; box-shadow: 0 5px 15px var(--accent-glow); color: white; font-weight: bold; font-size: 14px; transition: 0.3s; border: 2px solid #fff;}
         .fab:hover { transform: scale(1.05); background: #0284c7; }
         .menu-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; display: none; }
 
         /* PRINT STYLES */
         @media print {
-            .fab, #system-menu, .menu-overlay, .tabs, #admin-form, .admin-only, .cloud-status { display: none !important; }
+            .fab, #system-menu, .menu-overlay, .tabs, #admin-form, .admin-only, .cloud-status, .chat-panel { display: none !important; }
             body { background: white; color: black; }
             .panel { border: 1px solid #ccc; box-shadow: none; break-inside: avoid; }
         }
@@ -95,7 +95,7 @@
     <div id="portal-overlay">
         <div class="auth-card">
             <h2 style="margin:0; color:var(--accent)">BODYLINE LOGIN</h2>
-            <p style="font-size: 12px; color:var(--text-dim)">v10.0 Enterprise Secure Sync</p>
+            <p style="font-size: 12px; color:var(--text-dim)">v11.0 Interactive Edition</p>
             <input type="password" id="access-code" placeholder="PIN CODE">
             <button class="btn btn-primary" id="login-btn" onclick="authorize()" style="padding: 15px; font-size: 16px;">SECURE LOGIN</button>
         </div>
@@ -169,16 +169,29 @@
                 <textarea id="f-comment" placeholder="Jamming details or troubleshooting notes..." rows="2"></textarea>
                 <button class="btn btn-primary" onclick="saveData()" style="margin-top:5px; padding:12px;">TRANSMIT RECORD</button>
             </div>
+        </div>
 
-            <div class="panel" style="grid-column: span 1;">
-                <h3 style="margin:0">Master Log Database</h3>
-                <div style="overflow-x:auto;">
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px;">
+            <div class="panel">
+                <h3 style="margin:0 0 10px 0;">Master Log Database</h3>
+                <div style="overflow-x:auto; height: 300px;">
                     <table id="log-table">
                         <thead>
                             <tr><th>Date</th><th>Shift</th><th>Line</th><th>Actual</th><th>Rejects</th><th>Eff%</th><th>Down</th><th>Comments</th><th class="admin-only">Action</th></tr>
                         </thead>
                         <tbody id="log-body"></tbody>
                     </table>
+                </div>
+            </div>
+
+            <div class="panel chat-panel" style="display: flex; flex-direction: column;">
+                <h3 style="margin:0 0 10px 0; color: var(--accent);">💬 Live Team Comms</h3>
+                <div id="chat-box" class="chat-container">
+                    <div style="text-align: center; color: var(--text-dim); margin-top: 50px;">Loading messages...</div>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="chat-input" placeholder="Type a message..." style="margin: 0;" onkeypress="if(event.key === 'Enter') sendComment()">
+                    <button class="btn btn-primary" onclick="sendComment()" style="width: auto; padding: 10px 15px;">SEND</button>
                 </div>
             </div>
         </div>
@@ -214,17 +227,17 @@
         let charts = {};
         let currentUser = "";
 
-        // SECURE LOGIN LOGIC
+        Chart.defaults.color = '#94a3b8';
+        Chart.defaults.font.family = 'Inter';
+
         async function authorize() {
             const pin = document.getElementById('access-code').value;
             const btn = document.getElementById('login-btn');
             btn.innerText = "AUTHENTICATING...";
 
-            // 1. Ask Supabase if this PIN exists in the new 'user_roles' table
             const { data, error } = await sb.from('user_roles').select('*').eq('pin', pin).single();
 
             if(data) {
-                // Secure Login Success!
                 currentUser = data.user_name;
                 isEngineer = (data.role === 'Admin');
 
@@ -232,10 +245,10 @@
                 
                 if(isEngineer) {
                     document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
-                    document.getElementById('admin-form').style.gridColumn = "span 1";
                 } else {
                     document.getElementById('delay-status').style.display = 'inline';
-                    document.querySelector('.panel:last-child').style.gridColumn = "span 2";
+                    // Re-adjust grid if viewer so master log and chat look good
+                    document.querySelector('.chart-row:last-of-type').style.display = "none";
                 }
                 
                 document.getElementById('portal-overlay').style.display = 'none';
@@ -243,32 +256,70 @@
                 recordGlobalAccess(currentUser);
                 initCharts();
                 fetchData();
+                fetchComments(); // Load Chat History
                 setupRealtime();
                 setInterval(processDelayAndRender, 10000); 
 
             } else {
-                // FALLBACK: Just in case you haven't created the table yet, keep your Admin PIN working so you don't get locked out.
                 if(pin === "122022") {
-                    alert("WARNING: Using Fallback Admin PIN. Please create the 'user_roles' table in Supabase to secure your system.");
+                    alert("WARNING: Using Fallback Admin PIN. Please create 'user_roles' table.");
                     currentUser = "Engr. Pinapit (Fallback)";
                     isEngineer = true;
                     document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
                     document.getElementById('user-display').innerText = currentUser;
                     document.getElementById('portal-overlay').style.display = 'none';
-                    initCharts(); fetchData(); setupRealtime();
+                    initCharts(); fetchData(); fetchComments(); setupRealtime();
                 } else {
-                    alert("Invalid PIN or Database Table Missing. Please contact Admin.");
+                    alert("Invalid PIN or Database Table Missing.");
                 }
             }
             btn.innerText = "SECURE LOGIN";
         }
 
+        // --- LIVE CHAT FUNCTIONS ---
+        async function sendComment() {
+            const input = document.getElementById('chat-input');
+            const msg = input.value.trim();
+            if(!msg) return;
+            
+            input.value = ''; // Clear box immediately
+            const { error } = await sb.from('live_comments').insert([{ user_name: currentUser, message: msg }]);
+            if(error) {
+                alert("Could not send message. Please create 'live_comments' table in Supabase.");
+            } else {
+                fetchComments(); // Pull back instantly
+            }
+        }
+
+        async function fetchComments() {
+            const { data, error } = await sb.from('live_comments').select('*').order('created_at', {ascending: true}).limit(50);
+            const box = document.getElementById('chat-box');
+            
+            if(error) {
+                box.innerHTML = `<div style="color:var(--warning); text-align:center; padding: 20px;">⚠️ Chat unavailable.<br>Admin: Create 'live_comments' table in Supabase (Columns: id, user_name, message, created_at).</div>`;
+            } else if (data) {
+                box.innerHTML = data.map(c => {
+                    const time = new Date(c.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    const isAdmin = c.user_name.includes("Admin") || c.user_name.includes("Engr.");
+                    const msgClass = isAdmin ? "chat-msg admin-msg" : "chat-msg";
+                    const nameColor = isAdmin ? "var(--warning)" : "var(--accent)";
+                    
+                    return `<div class="${msgClass}">
+                        <span style="color: var(--text-dim); font-size: 10px; margin-right: 5px;">[${time}]</span>
+                        <strong style="color: ${nameColor};">${c.user_name}:</strong>
+                        <span style="color: var(--text); line-height: 1.4;">${c.message}</span>
+                    </div>`;
+                }).join('');
+                box.scrollTop = box.scrollHeight; // Auto-scroll to bottom
+            }
+        }
+
+        // --- STANDARD SYNC LOGIC ---
         async function recordGlobalAccess(name) {
             const timeStr = new Date().toLocaleString();
             let localLogs = JSON.parse(localStorage.getItem('bl_access_history')) || [];
             localLogs.unshift(`[${timeStr}] ${name} accessed dashboard.`);
             localStorage.setItem('bl_access_history', JSON.stringify(localLogs.slice(0, 50)));
-
             await sb.from('access_logs').insert([{ user_name: name }]);
             if(isEngineer) fetchGlobalLogs();
         }
@@ -276,7 +327,6 @@
         async function fetchGlobalLogs() {
             const { data, error } = await sb.from('access_logs').select('*').order('created_at', {ascending:false}).limit(50);
             const display = document.getElementById('access-log-display');
-            
             if(error) {
                 let localLogs = JSON.parse(localStorage.getItem('bl_access_history')) || [];
                 display.innerHTML = `<div style="color:var(--warning); margin-bottom:10px;">⚠️ Cloud Table 'access_logs' not found. Showing local history:</div>` + 
@@ -304,13 +354,14 @@
                 }
             });
 
+            // Listen to BOTH production data and live comments
             sb.channel('custom-all-channel')
-              .on('postgres_changes', { event: '*', schema: 'public', table: 'production_logs' }, (payload) => { fetchData(); })
+              .on('postgres_changes', { event: '*', schema: 'public', table: 'production_logs' }, () => { fetchData(); })
+              .on('postgres_changes', { event: '*', schema: 'public', table: 'live_comments' }, () => { fetchComments(); })
               .subscribe();
         }
 
         async function fetchData() {
-            // HIGH PERFORMANCE LIMIT: Only fetch the 500 most recent rows to prevent lag
             const { data, error } = await sb.from('production_logs').select('*').order('created_at', {ascending:false}).limit(500);
             if(!error && data) {
                 rawCloudData = data;
@@ -335,7 +386,6 @@
             const btn = document.querySelector('.btn-primary');
             btn.innerText = "TRANSMITTING...";
 
-            // Ensure we don't accidentally send empty strings instead of 0
             const tgt = parseInt(document.getElementById('f-target').value) || 0;
             const act = parseInt(document.getElementById('f-actual').value) || 0;
             const rej = parseFloat(document.getElementById('f-rejects').value) || 0;
@@ -345,7 +395,7 @@
                 date: document.getElementById('f-date').value || new Date().toISOString().split('T')[0],
                 shift: document.getElementById('f-shift').value,
                 line: document.getElementById('f-line').value,
-                target: Math.max(0, tgt), // Failsafe for negatives
+                target: Math.max(0, tgt),
                 actual: Math.max(0, act),
                 run_category: document.getElementById('f-run-category').value,
                 run: Math.max(0, parseInt(document.getElementById('f-run').value) || 0),
@@ -408,7 +458,7 @@
 
         function renderTable(data) {
             const body = document.getElementById('log-body');
-            body.innerHTML = data.slice(0, 20).map(r => {
+            body.innerHTML = data.slice(0, 30).map(r => {
                 const eff = r.target > 0 ? ((r.actual/r.target)*100).toFixed(1) : 0;
                 
                 let effColor = 'var(--success)';
@@ -445,43 +495,46 @@
         }
 
         function initCharts() {
-            const cfg = { responsive: true, maintainAspectRatio: false };
+            const cfg = { responsive: true, maintainAspectRatio: false, color: '#94a3b8' };
             
             charts.prod = new Chart(document.getElementById('prodChart'), {
                 type: 'line', data: { labels: [], datasets: [{ label: 'Actual', borderColor: '#0ea5e9', data: [] }, { label: 'Target', borderColor: '#8b5cf6', data: [], borderDash: [5,5] }]}, options: cfg
             });
             
+            // DOUGHNUT CHART FOR RUN VS DOWN TIME
             charts.util = new Chart(document.getElementById('utilChart'), {
-                type: 'bar', data: { labels: [], datasets: [
-                    { label: 'Run Time (min.)', backgroundColor: '#10b981', data: [] },
-                    { label: 'Down Time (min.)', backgroundColor: '#ef4444', data: [] }
-                ]}, options: cfg
+                type: 'doughnut', data: { labels: ['Total Run Time', 'Total Down Time'], datasets: [
+                    { data: [0, 0], backgroundColor: ['#10b981', '#ef4444'], borderWidth: 0, cutout: '75%' }
+                ]}, options: { ...cfg, plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8' } } } }
             });
 
             charts.eff = new Chart(document.getElementById('effChart'), {
-                type: 'bar', data: { labels: [], datasets: [{ label: 'Eff %', backgroundColor: [], data: [] }]}, options: { ...cfg, scales: { y: { max: 100 } } }
+                type: 'bar', data: { labels: [], datasets: [{ label: 'Eff %', backgroundColor: [], data: [] }]}, options: { ...cfg, scales: { y: { max: 100 } }, plugins: { legend: { display: false } } }
             });
 
             charts.pareto = new Chart(document.getElementById('paretoChart'), {
-                type: 'bar', data: { labels: [], datasets: [{ label: 'Minutes Down', backgroundColor: '#ef4444', data: [] }]}, options: cfg
+                type: 'bar', data: { labels: [], datasets: [{ label: 'Minutes Down', backgroundColor: '#ef4444', data: [] }]}, options: { ...cfg, plugins: { legend: { display: false } } }
             });
         }
 
         function updateCharts(data) {
             if(!charts.prod) return;
+            
+            // Prod Line Chart
             const plotData = [...data].reverse().slice(-10);
             const labels = plotData.map(r => (r.date ? r.date.slice(5) : '') + " " + (r.shift === 'Day Shift' ? 'D' : 'N'));
-            
             charts.prod.data.labels = labels;
             charts.prod.data.datasets[0].data = plotData.map(r => r.actual);
             charts.prod.data.datasets[1].data = plotData.map(r => r.target);
             charts.prod.update();
 
-            charts.util.data.labels = labels;
-            charts.util.data.datasets[0].data = plotData.map(r => r.run);
-            charts.util.data.datasets[1].data = plotData.map(r => r.down);
+            // Doughnut Chart (Total Utilization)
+            const totalRun = data.reduce((sum, r) => sum + (r.run || 0), 0);
+            const totalDown = data.reduce((sum, r) => sum + (r.down || 0), 0);
+            charts.util.data.datasets[0].data = [totalRun, totalDown];
             charts.util.update();
 
+            // Efficiency Chart
             const lines = [...new Set(data.map(r => r.line))].sort();
             charts.eff.data.labels = lines;
             const effValues = lines.map(l => {
@@ -491,7 +544,6 @@
                 return t > 0 ? (a/t*100) : 0;
             });
             charts.eff.data.datasets[0].data = effValues;
-            
             charts.eff.data.datasets[0].backgroundColor = effValues.map(e => {
                 if (e < 65) return '#ef4444'; 
                 if (e < 80) return '#f59e0b'; 
@@ -499,6 +551,7 @@
             });
             charts.eff.update();
 
+            // Pareto Chart
             const reasons = {};
             data.forEach(r => { if(r.down > 0 && r.reason !== "Normal") reasons[r.reason] = (reasons[r.reason] || 0) + r.down; });
             charts.pareto.data.labels = Object.keys(reasons);
@@ -506,32 +559,18 @@
             charts.pareto.update();
         }
 
-        // REAL CSV EXPORT FUNCTION
         function exportCSV() {
-            if (displayData.length === 0) {
-                alert("No data available to export.");
-                return;
-            }
-
-            let csv = "Date,Shift,Line,Target,Actual,Rejects (kg),Downtime (min),Efficiency %,Reason,Comments\n";
-            
+            if (displayData.length === 0) { alert("No data available."); return; }
+            let csv = "Date,Shift,Line,Target,Actual,Rejects(kg),Down(min),Eff%,Reason,Comments\n";
             displayData.forEach(r => {
                 const eff = r.target > 0 ? ((r.actual/r.target)*100).toFixed(1) : 0;
-                // Clean comments to prevent commas from breaking the CSV columns
                 const safeComment = r.comment ? r.comment.replace(/,/g, " ") : "";
-                
                 csv += `${r.date},${r.shift},${r.line},${r.target},${r.actual},${r.rejects || 0},${r.down || 0},${eff}%,${r.reason},"${safeComment}"\n`;
             });
-            
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; 
-            a.download = `Bodyline_Production_Export_${new Date().toISOString().split('T')[0]}.csv`; 
-            a.style.display = 'none';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+            const a = document.createElement('a'); a.href = url; a.download = `Bodyline_Log_${new Date().toISOString().split('T')[0]}.csv`; 
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
         }
 
         function toggleMenu() { 
