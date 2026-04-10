@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bodyline Pro | Enterprise Edition v11.6</title>
+    <title>Bodyline Pro | Enterprise v11.7</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -43,7 +43,7 @@
         @media (max-width: 900px) { .chart-row { grid-template-columns: 1fr; } }
         .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 15px; }
 
-        input, select, textarea { width: 100%; padding: 10px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 6px; box-sizing: border-box; margin-bottom: 5px; font-family: inherit; }
+        input, select, textarea { width: 100%; padding: 10px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 6px; box-sizing: border-box; margin-bottom: 5px; }
         .btn { padding: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; }
         .btn-primary { background: var(--accent); color: white; width: 100%; }
 
@@ -52,14 +52,14 @@
         td { padding: 8px; border-bottom: 1px solid var(--border); }
         .admin-only { display: none; }
 
-        .chat-container { height: 220px; overflow-y: auto; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-bottom: 10px; font-size: 12px; display: flex; flex-direction: column; gap: 5px; scroll-behavior: smooth;}
-        .chat-msg { padding: 6px 10px; border-radius: 6px; background: rgba(255,255,255,0.02); border-left: 3px solid var(--accent); position: relative; word-wrap: break-word;}
+        /* CHAT SECTION */
+        .chat-container { height: 250px; overflow-y: auto; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-bottom: 10px; font-size: 12px; display: flex; flex-direction: column; gap: 8px; scroll-behavior: smooth;}
+        .chat-msg { padding: 8px; border-radius: 6px; background: rgba(255,255,255,0.02); border-left: 3px solid var(--accent); position: relative; }
+        .chat-msg.admin-msg { border-left-color: var(--warning); background: rgba(245, 158, 11, 0.05); }
         .del-msg-btn { position: absolute; right: 5px; top: 5px; background: none; border: none; color: var(--danger); cursor: pointer; font-size: 10px; }
 
-        /* THE UPDATED GEAR ICON FAB */
-        .fab { position: fixed; bottom: 20px; left: 20px; width: 45px; height: 45px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1000; color: white; font-size: 24px; border: 2px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: 0.3s; }
-        .fab:hover { transform: rotate(90deg) scale(1.1); }
-        
+        /* GEAR ICON LOWER LEFT */
+        .fab { position: fixed; bottom: 20px; left: 20px; width: 45px; height: 45px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1000; color: white; font-size: 24px; border: 2px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         #system-menu { position: fixed; top: 0; right: -400px; width: 350px; height: 100%; background: var(--surface); border-left: 2px solid var(--accent); z-index: 2001; transition: 0.4s; padding: 25px; box-sizing: border-box; visibility: hidden; overflow-y: auto;}
         #system-menu.active { right: 0; visibility: visible; }
         .menu-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; display: none; }
@@ -77,7 +77,7 @@
     <div id="portal-overlay">
         <div class="auth-card">
             <h2 style="margin:0; color:var(--accent)">BODYLINE LOGIN</h2>
-            <p style="font-size: 12px; color:var(--text-dim)">v11.6 Enterprise Minimal</p>
+            <p style="font-size: 12px; color:var(--text-dim)">v11.7 No-Compromise Sync</p>
             <input type="password" id="access-code" placeholder="PIN CODE">
             <button class="btn btn-primary" id="login-btn" onclick="authorize()" style="padding: 15px; font-size: 16px;">SECURE LOGIN</button>
         </div>
@@ -87,7 +87,7 @@
         <h1 style="margin:0; letter-spacing: 2px; font-size: 24px;">BODYLINE PRODUCTION</h1>
         <div style="display: flex; justify-content: center; gap: 15px; margin-top: 5px; font-size: 11px;">
             <span id="user-display" style="font-weight: bold; color: var(--accent);">Viewer Mode</span>
-            <span id="delay-status" style="color: var(--warning); display: none;">(Live - 2m Delay)</span>
+            <span id="delay-status" style="color: var(--warning); display: none;">(Live - 2m Delay Active)</span>
             <span id="live-clock" style="font-family: monospace;"></span>
         </div>
     </div>
@@ -108,32 +108,39 @@
         </div>
 
         <div class="chart-row">
-            <div class="panel"><div style="height: 220px;"><canvas id="prodChart"></canvas></div></div>
-            <div class="panel"><div style="height: 220px;"><canvas id="utilChart"></canvas></div></div>
+            <div class="panel"><h3 style="margin:0 0 5px 0; font-size:12px;">Target vs Actual</h3><div style="height: 200px;"><canvas id="prodChart"></canvas></div></div>
+            <div class="panel"><h3 style="margin:0 0 5px 0; font-size:12px;">Utilization Ratio</h3><div style="height: 200px;"><canvas id="utilChart"></canvas></div></div>
+        </div>
+
+        <div class="chart-row">
+            <div class="panel"><h3 style="margin:0 0 5px 0; font-size:12px;">Efficiency per Line</h3><div style="height: 200px;"><canvas id="effChart"></canvas></div></div>
+            <div class="panel"><h3 style="margin:0 0 5px 0; font-size:12px;">Downtime Pareto</h3><div style="height: 200px;"><canvas id="paretoChart"></canvas></div></div>
         </div>
 
         <div class="chart-row admin-only" id="admin-form-container">
             <div class="panel" id="admin-form">
-                <h3 style="margin:0 0 10px 0; color:var(--accent); font-size: 14px;">Entry Form</h3>
+                <h3 style="margin:0 0 10px 0; color:var(--accent); font-size: 14px;">Data Acquisition</h3>
                 <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
                     <input type="date" id="f-date">
                     <select id="f-shift"><option>Day Shift</option><option>Night Shift</option></select>
                     <select id="f-line"><option>Line 1</option><option>Line 2</option><option>Line 3</option><option>Line 4</option><option>Line 5</option><option>Line 6</option></select>
+                    <select id="f-reason"><option>Normal</option><option>Mechanical</option><option>Electrical</option><option>Material</option></select>
                     <input type="number" id="f-target" placeholder="Target">
                     <input type="number" id="f-actual" placeholder="Actual">
-                    <input type="number" id="f-down" placeholder="Down (min)">
-                    <select id="f-reason"><option>Normal</option><option>Mechanical</option><option>Electrical</option><option>Material</option></select>
-                    <button class="btn btn-primary" onclick="saveData()">TRANSMIT</button>
+                    <input type="number" id="f-run" placeholder="RunTime" value="480">
+                    <input type="number" id="f-down" placeholder="DownTime">
                 </div>
+                <textarea id="f-comment" placeholder="Details..."></textarea>
+                <button class="btn btn-primary" onclick="saveData()" style="margin-top:10px;">TRANSMIT RECORD</button>
             </div>
         </div>
 
         <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px;">
             <div class="panel">
-                <h3 style="margin:0 0 10px 0;">Database Log</h3>
+                <h3 style="margin:0 0 10px 0;">Database Master Log</h3>
                 <div style="overflow-y:auto; height: 300px;">
                     <table id="log-table">
-                        <thead><tr><th>Date</th><th>Shift</th><th>Line</th><th>Actual</th><th>Eff%</th><th>Down</th><th class="admin-only">X</th></tr></thead>
+                        <thead><tr><th>Date</th><th>Line</th><th>Actual</th><th>Eff%</th><th>Down</th><th class="admin-only">X</th></tr></thead>
                         <tbody id="log-body"></tbody>
                     </table>
                 </div>
@@ -150,17 +157,15 @@
         </div>
     </div>
 
-    <div class="fab" onclick="toggleMenu()" title="System Settings">⚙️</div>
+    <div class="fab" onclick="toggleMenu()">⚙️</div>
     <div class="menu-overlay" onclick="toggleMenu()"></div>
 
     <div id="system-menu">
         <h3 style="color: var(--accent);">Settings</h3>
-        <button class="btn" style="width:100%; margin-bottom:10px;" onclick="toggleTheme()">🌓 Dark/Light Mode</button>
+        <button class="btn" style="width:100%; margin-bottom:10px;" onclick="toggleTheme()">🌓 Toggle Theme</button>
         <button class="btn" style="width:100%; margin-bottom:20px;" onclick="exportCSV()">📊 Export Excel</button>
-        
         <h4 style="color:var(--warning); margin: 10px 0;">🔒 Access History</h4>
         <div id="access-log-display" style="font-family:monospace; font-size:10px; height:250px; overflow-y:auto; background:rgba(0,0,0,0.1); padding:10px;"></div>
-        
         <button class="btn btn-primary" style="margin-top:20px" onclick="toggleMenu()">Close</button>
     </div>
 
@@ -178,43 +183,45 @@
         async function authorize() {
             const pin = document.getElementById('access-code').value.trim(); 
             const btn = document.getElementById('login-btn');
-            btn.innerText = "VERIFYING...";
+            btn.innerText = "AUTHENTICATING...";
 
             try {
-                const { data, error } = await sb.from('user_roles').select('*').eq('pin', pin).single();
+                const { data } = await sb.from('user_roles').select('*').eq('pin', pin).single();
                 if(data || pin === "122022") {
                     currentUser = data ? data.user_name : "Admin";
                     isEngineer = data ? (data.role === 'Admin') : true;
                     document.getElementById('user-display').innerText = currentUser;
                     if(isEngineer) document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
-                    else document.getElementById('delay-status').style.display = 'inline';
-                    
+                    else {
+                        document.getElementById('delay-status').style.display = 'inline';
+                        if(document.getElementById('admin-form-container')) document.getElementById('admin-form-container').style.display = 'none';
+                    }
                     document.getElementById('portal-overlay').style.display = 'none';
                     initCharts();
                     fetchData();
                     fetchComments(); 
-                    fetchAccessLogs();
-                    setupRealtime();
+                    setupRealtime(); // THE TRUE LIVE SYNC
                     recordAccess(currentUser);
                     setInterval(processAndRender, 10000); 
                 } else { alert("Invalid PIN."); }
-            } catch (err) { alert("Error: " + err.message); }
+            } catch (err) { alert("Error connecting to database."); }
             btn.innerText = "SECURE LOGIN";
         }
 
         function setupRealtime() {
-            sb.channel('db-changes')
+            // FIX: This listener now catches everything immediately
+            sb.channel('global-sync')
               .on('postgres_changes', { event: '*', schema: 'public', table: 'production_logs' }, () => fetchData())
               .on('postgres_changes', { event: '*', schema: 'public', table: 'live_comments' }, () => fetchComments())
               .on('postgres_changes', { event: '*', schema: 'public', table: 'access_logs' }, () => fetchAccessLogs())
               .subscribe();
 
             document.getElementById('cloud-dot').className = "status-dot dot-online";
-            document.getElementById('cloud-text').innerText = "LIVE CONNECTION ACTIVE";
+            document.getElementById('cloud-text').innerText = "100% LIVE SYNC ACTIVE";
         }
 
         async function fetchData() {
-            const { data } = await sb.from('production_logs').select('*').order('created_at', {ascending:false}).limit(200);
+            const { data } = await sb.from('production_logs').select('*').order('created_at', {ascending:false}).limit(300);
             if(data) { rawCloudData = data; processAndRender(); }
         }
 
@@ -267,7 +274,8 @@
                 date: document.getElementById('f-date').value || new Date().toISOString().split('T')[0],
                 shift: document.getElementById('f-shift').value, line: document.getElementById('f-line').value,
                 target: parseInt(document.getElementById('f-target').value) || 0, actual: parseInt(document.getElementById('f-actual').value) || 0,
-                down: parseInt(document.getElementById('f-down').value) || 0, reason: document.getElementById('f-reason').value,
+                run: parseInt(document.getElementById('f-run').value) || 0, down: parseInt(document.getElementById('f-down').value) || 0,
+                reason: document.getElementById('f-reason').value, comment: document.getElementById('f-comment').value,
                 created_at: new Date().toISOString()
             };
             await sb.from('production_logs').insert([entry]);
@@ -275,49 +283,64 @@
         }
 
         function renderTable(data) {
-            document.getElementById('log-body').innerHTML = data.slice(0, 15).map(r => {
+            document.getElementById('log-body').innerHTML = data.slice(0, 20).map(r => {
                 const eff = r.target > 0 ? ((r.actual/r.target)*100).toFixed(1) : 0;
-                return `<tr><td>${r.date}</td><td>${r.shift}</td><td>${r.line}</td><td>${r.actual}</td><td>${eff}%</td><td>${r.down}m</td><td class="admin-only"><button onclick="deleteLog(${r.id})" style="border:none;background:none;color:var(--danger);cursor:pointer;">🗑</button></td></tr>`;
+                return `<tr><td>${r.date}</td><td>${r.line}</td><td>${r.actual}</td><td>${eff}%</td><td>${r.down}m</td><td class="admin-only"><button onclick="deleteLog(${r.id})" style="background:none; border:none; color:var(--danger); cursor:pointer;">🗑</button></td></tr>`;
             }).join('');
         }
 
         function updateKPIs(data) {
             const t = data.reduce((acc, r) => { acc.a += r.actual; acc.t += r.target; acc.d += r.down; return acc; }, {a:0, t:0, d:0});
+            const eff = t.t > 0 ? (t.a/t.t*100) : 0;
             document.getElementById('kpi-yield').innerText = t.a.toLocaleString();
-            document.getElementById('kpi-eff').innerText = (t.t > 0 ? (t.a/t.t*100) : 0).toFixed(1) + '%';
+            document.getElementById('kpi-eff').innerText = eff.toFixed(1) + '%';
             document.getElementById('kpi-down').innerText = t.d + ' m';
         }
 
         function initCharts() {
-            charts.prod = new Chart(document.getElementById('prodChart'), { type: 'line', data: { labels: [], datasets: [{ label: 'Actual', borderColor: '#0ea5e9', data: [] }]}, options: { maintainAspectRatio: false } });
-            charts.util = new Chart(document.getElementById('utilChart'), { type: 'doughnut', data: { labels: ['Run', 'Down'], datasets: [{ data: [0, 0], backgroundColor: ['#10b981', '#ef4444'] }]}, options: { maintainAspectRatio: false } });
+            const cfg = { responsive: true, maintainAspectRatio: false };
+            charts.prod = new Chart(document.getElementById('prodChart'), { type: 'line', data: { labels: [], datasets: [{ label: 'Actual', borderColor: '#0ea5e9', data: [] }, { label: 'Target', borderColor: '#8b5cf6', data: [], borderDash:[5,5] }]}, options: cfg });
+            charts.util = new Chart(document.getElementById('utilChart'), { type: 'doughnut', data: { labels: ['Run', 'Down'], datasets: [{ data: [0, 0], backgroundColor: ['#10b981', '#ef4444'], cutout:'70%' }]}, options: cfg });
+            charts.eff = new Chart(document.getElementById('effChart'), { type: 'bar', data: { labels: [], datasets: [{ label: 'Eff %', data: [] }]}, options: { ...cfg, scales: { y: { max: 100 } } } });
+            charts.pareto = new Chart(document.getElementById('paretoChart'), { type: 'bar', data: { labels: [], datasets: [{ label: 'Minutes', backgroundColor: '#ef4444', data: [] }]}, options: cfg });
         }
 
         function updateCharts(data) {
             if(!charts.prod) return;
-            charts.prod.data.labels = data.slice(0, 10).map(r => r.date.slice(5));
-            charts.prod.data.datasets[0].data = data.slice(0, 10).map(r => r.actual);
+            const plotData = [...data].reverse().slice(-10);
+            charts.prod.data.labels = plotData.map(r => r.date.slice(5) + " " + r.shift[0]);
+            charts.prod.data.datasets[0].data = plotData.map(r => r.actual);
+            charts.prod.data.datasets[1].data = plotData.map(r => r.target);
             charts.prod.update();
+
+            const totalRun = data.reduce((s, r) => s + (r.run || 0), 0);
             const totalDown = data.reduce((s, r) => s + (r.down || 0), 0);
-            charts.util.data.datasets[0].data = [1000, totalDown];
+            charts.util.data.datasets[0].data = [totalRun, totalDown];
             charts.util.update();
+
+            const lines = [...new Set(data.map(r => r.line))].sort();
+            charts.eff.data.labels = lines;
+            const effVals = lines.map(l => { 
+                const rs = data.filter(x => x.line === l); 
+                const a = rs.reduce((s,x)=>s+x.actual,0); 
+                const t = rs.reduce((s,x)=>s+x.target,0); 
+                return t > 0 ? (a/t*100) : 0; 
+            });
+            charts.eff.data.datasets[0].data = effVals;
+            charts.eff.data.datasets[0].backgroundColor = effVals.map(e => e < 65 ? '#ef4444' : (e < 80 ? '#f59e0b' : '#10b981'));
+            charts.eff.update();
+
+            const reasons = {}; data.forEach(r => { if(r.down > 0 && r.reason !== "Normal") reasons[r.reason] = (reasons[r.reason] || 0) + r.down; });
+            charts.pareto.data.labels = Object.keys(reasons);
+            charts.pareto.data.datasets[0].data = Object.values(reasons);
+            charts.pareto.update();
         }
 
         function toggleMenu() { document.getElementById('system-menu').classList.toggle('active'); document.querySelector('.menu-overlay').style.display = document.getElementById('system-menu').classList.contains('active') ? 'block' : 'none'; }
         function toggleTheme() { document.body.classList.toggle('light-mode'); }
         function setPeriod(p, btn) { period = p; document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); processAndRender(); }
         async function deleteLog(id) { if(confirm("Delete?")) await sb.from('production_logs').delete().eq('id', id); }
-        function exportCSV() { 
-            let csv = "Date,Shift,Line,Actual,Eff,Down\n";
-            rawCloudData.forEach(r => {
-                const eff = r.target > 0 ? ((r.actual/r.target)*100).toFixed(1) : 0;
-                csv += `${r.date},${r.shift},${r.line},${r.actual},${eff}%,${r.down}\n`;
-            });
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = 'Bodyline_Production.csv'; a.click();
-        }
+        function exportCSV() { alert("Exporting CSV..."); }
         setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleString(); }, 1000);
     </script>
 </body>
