@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bodyline Pro | Enterprise Edition v11.4</title>
+    <title>Bodyline Pro | Enterprise Edition v11.6</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -29,25 +29,22 @@
         #portal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 10000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
         .auth-card { background: #18181b; padding: 40px; border-radius: 16px; border: 1px solid var(--accent); width: 320px; text-align: center; }
         .auth-card input { width: 100%; padding: 15px; background: #000; border: 1px solid var(--border); color: var(--success); font-size: 20px; text-align: center; border-radius: 8px; margin: 20px 0; letter-spacing: 5px; }
-        .header-banner { text-align: center; padding: 25px 15px 15px 15px; background: var(--surface); border-bottom: 2px solid var(--accent); }
 
+        .header-banner { text-align: center; padding: 25px 15px 15px 15px; background: var(--surface); border-bottom: 2px solid var(--accent); }
         .tabs { display: flex; gap: 10px; justify-content: center; margin: 15px 0; }
         .tab-btn { padding: 8px 20px; background: var(--surface); border: 1px solid var(--border); color: var(--text-dim); border-radius: 20px; cursor: pointer; font-weight: bold; transition: 0.3s;}
         .tab-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
 
         .main-content { padding: 0 15px 30px 15px; max-width: 1600px; margin: auto; }
         .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 15px; }
-        .kpi-card { background: var(--surface); border: 1px solid var(--border); padding: 15px; border-radius: 10px; text-align: center; transition: 0.3s; }
-        .status-good { border-bottom: 4px solid var(--success); }
-        .status-warn { border-bottom: 4px solid var(--warning); }
-        .status-crit { border-bottom: 4px solid var(--danger); box-shadow: 0 0 15px rgba(239, 68, 68, 0.2); }
-
+        .kpi-card { background: var(--surface); border: 1px solid var(--border); padding: 15px; border-radius: 10px; text-align: center; }
+        
         .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
         @media (max-width: 900px) { .chart-row { grid-template-columns: 1fr; } }
         .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 15px; }
 
         input, select, textarea { width: 100%; padding: 10px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 6px; box-sizing: border-box; margin-bottom: 5px; font-family: inherit; }
-        .btn { padding: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s;}
+        .btn { padding: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; }
         .btn-primary { background: var(--accent); color: white; width: 100%; }
 
         table { width: 100%; border-collapse: collapse; font-size: 11px; }
@@ -55,12 +52,14 @@
         td { padding: 8px; border-bottom: 1px solid var(--border); }
         .admin-only { display: none; }
 
-        .chat-container { height: 250px; overflow-y: auto; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-bottom: 10px; font-size: 12px; display: flex; flex-direction: column; gap: 8px; scroll-behavior: smooth;}
-        .chat-msg { padding: 8px; border-radius: 6px; background: rgba(255,255,255,0.02); border-left: 3px solid var(--accent); position: relative; }
-        .chat-msg.admin-msg { border-left-color: var(--warning); background: rgba(245, 158, 11, 0.05); }
-        .del-msg-btn { position: absolute; right: 5px; top: 5px; background: none; border: none; color: var(--danger); cursor: pointer; font-size: 10px; opacity: 0.5; padding: 5px; }
+        .chat-container { height: 220px; overflow-y: auto; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-bottom: 10px; font-size: 12px; display: flex; flex-direction: column; gap: 5px; scroll-behavior: smooth;}
+        .chat-msg { padding: 6px 10px; border-radius: 6px; background: rgba(255,255,255,0.02); border-left: 3px solid var(--accent); position: relative; word-wrap: break-word;}
+        .del-msg-btn { position: absolute; right: 5px; top: 5px; background: none; border: none; color: var(--danger); cursor: pointer; font-size: 10px; }
 
-        .fab { position: fixed; bottom: 30px; right: 30px; padding: 15px 25px; background: var(--accent); border-radius: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1000; box-shadow: 0 5px 15px var(--accent-glow); color: white; font-weight: bold; border: 2px solid #fff;}
+        /* THE UPDATED GEAR ICON FAB */
+        .fab { position: fixed; bottom: 20px; left: 20px; width: 45px; height: 45px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1000; color: white; font-size: 24px; border: 2px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: 0.3s; }
+        .fab:hover { transform: rotate(90deg) scale(1.1); }
+        
         #system-menu { position: fixed; top: 0; right: -400px; width: 350px; height: 100%; background: var(--surface); border-left: 2px solid var(--accent); z-index: 2001; transition: 0.4s; padding: 25px; box-sizing: border-box; visibility: hidden; overflow-y: auto;}
         #system-menu.active { right: 0; visibility: visible; }
         .menu-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; display: none; }
@@ -68,7 +67,7 @@
 </head>
 <body class="light-mode">
 
-    <div id="andon-banner">🚨 CRITICAL ALERT: LINE PERFORMANCE HAS DROPPED BELOW ACCEPTABLE THRESHOLD 🚨</div>
+    <div id="andon-banner">🚨 CRITICAL ALERT: PERFORMANCE DROP 🚨</div>
 
     <div class="cloud-status">
         <div id="cloud-dot" class="status-dot dot-offline"></div>
@@ -78,7 +77,7 @@
     <div id="portal-overlay">
         <div class="auth-card">
             <h2 style="margin:0; color:var(--accent)">BODYLINE LOGIN</h2>
-            <p style="font-size: 12px; color:var(--text-dim)">v11.4 24/7 Live Monitoring</p>
+            <p style="font-size: 12px; color:var(--text-dim)">v11.6 Enterprise Minimal</p>
             <input type="password" id="access-code" placeholder="PIN CODE">
             <button class="btn btn-primary" id="login-btn" onclick="authorize()" style="padding: 15px; font-size: 16px;">SECURE LOGIN</button>
         </div>
@@ -88,7 +87,7 @@
         <h1 style="margin:0; letter-spacing: 2px; font-size: 24px;">BODYLINE PRODUCTION</h1>
         <div style="display: flex; justify-content: center; gap: 15px; margin-top: 5px; font-size: 11px;">
             <span id="user-display" style="font-weight: bold; color: var(--accent);">Viewer Mode</span>
-            <span id="delay-status" style="color: var(--warning); display: none;">(Live Monitoring - 2m Delay)</span>
+            <span id="delay-status" style="color: var(--warning); display: none;">(Live - 2m Delay)</span>
             <span id="live-clock" style="font-family: monospace;"></span>
         </div>
     </div>
@@ -109,81 +108,60 @@
         </div>
 
         <div class="chart-row">
-            <div class="panel">
-                <h3 style="margin:0 0 10px 0; font-size: 14px;">Target vs Actual Trend</h3>
-                <div style="height: 220px;"><canvas id="prodChart"></canvas></div>
-            </div>
-            <div class="panel">
-                <h3 style="margin:0 0 10px 0; font-size: 14px;">Utilization: Run vs Down Time</h3>
-                <div style="height: 220px;"><canvas id="utilChart"></canvas></div>
-            </div>
+            <div class="panel"><div style="height: 220px;"><canvas id="prodChart"></canvas></div></div>
+            <div class="panel"><div style="height: 220px;"><canvas id="utilChart"></canvas></div></div>
         </div>
 
-        <div class="chart-row">
-            <div class="panel">
-                <h3 style="margin:0 0 10px 0; font-size: 14px;">Efficiency per Line (%)</h3>
-                <div style="height: 220px;"><canvas id="effChart"></canvas></div>
-            </div>
-            <div class="panel">
-                <h3 style="margin:0 0 10px 0; font-size: 14px;">Downtime Pareto</h3>
-                <div style="height: 220px;"><canvas id="paretoChart"></canvas></div>
-            </div>
-        </div>
-
-        <div class="chart-row" id="admin-form-container">
-            <div class="panel admin-only" id="admin-form">
-                <h3 style="margin:0 0 10px 0; color:var(--accent); font-size: 14px;">Data Acquisition Form</h3>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <div class="chart-row admin-only" id="admin-form-container">
+            <div class="panel" id="admin-form">
+                <h3 style="margin:0 0 10px 0; color:var(--accent); font-size: 14px;">Entry Form</h3>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
                     <input type="date" id="f-date">
                     <select id="f-shift"><option>Day Shift</option><option>Night Shift</option></select>
                     <select id="f-line"><option>Line 1</option><option>Line 2</option><option>Line 3</option><option>Line 4</option><option>Line 5</option><option>Line 6</option></select>
-                    <select id="f-reason"><option>Normal</option><option>Mechanical</option><option>Electrical</option><option>Material</option><option>QC</option><option>No Operation</option></select>
-                    <input type="number" id="f-target" placeholder="Target" min="0">
-                    <input type="number" id="f-actual" placeholder="Actual" min="0">
-                    <select id="f-run-category"><option>Regular Time</option><option>Overtime</option><option>Holiday / Weekend</option></select>
-                    <input type="number" id="f-run" placeholder="Run Time (min.)" value="480" min="0">
-                    <input type="number" step="any" id="f-rejects" placeholder="Rejects (kg.)" min="0">
-                    <input type="number" id="f-down" placeholder="Downtime (min.)" min="0">
+                    <input type="number" id="f-target" placeholder="Target">
+                    <input type="number" id="f-actual" placeholder="Actual">
+                    <input type="number" id="f-down" placeholder="Down (min)">
+                    <select id="f-reason"><option>Normal</option><option>Mechanical</option><option>Electrical</option><option>Material</option></select>
+                    <button class="btn btn-primary" onclick="saveData()">TRANSMIT</button>
                 </div>
-                <textarea id="f-comment" placeholder="Jamming details or troubleshooting notes..." rows="2"></textarea>
-                <button class="btn btn-primary" onclick="saveData()" style="margin-top:5px; padding:12px;">TRANSMIT RECORD</button>
             </div>
         </div>
 
         <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px;">
             <div class="panel">
-                <h3 style="margin:0 0 10px 0;">Master Log Database</h3>
-                <div style="overflow-x:auto; height: 300px;">
+                <h3 style="margin:0 0 10px 0;">Database Log</h3>
+                <div style="overflow-y:auto; height: 300px;">
                     <table id="log-table">
-                        <thead>
-                            <tr><th>Date</th><th>Shift</th><th>Line</th><th>Actual</th><th>Eff%</th><th>Down</th><th>Comments</th><th class="admin-only">Action</th></tr>
-                        </thead>
+                        <thead><tr><th>Date</th><th>Shift</th><th>Line</th><th>Actual</th><th>Eff%</th><th>Down</th><th class="admin-only">X</th></tr></thead>
                         <tbody id="log-body"></tbody>
                     </table>
                 </div>
             </div>
 
-            <div class="panel chat-panel" style="display: flex; flex-direction: column;">
-                <h3 style="margin:0 0 10px 0; color: var(--accent);">💬 Live Team Comms</h3>
-                <div id="chat-box" class="chat-container">
-                    <div style="text-align: center; color: var(--text-dim); margin-top: 50px;">Loading messages...</div>
-                </div>
-                <div style="display: flex; gap: 8px;">
-                    <input type="text" id="chat-input" placeholder="Type message..." style="margin: 0;" onkeypress="if(event.key === 'Enter') sendComment()">
-                    <button class="btn btn-primary" onclick="sendComment()" style="width: auto; padding: 10px 15px;">SEND</button>
+            <div class="panel">
+                <h3 style="margin:0 0 10px 0; color: var(--accent);">💬 Team Comms</h3>
+                <div id="chat-box" class="chat-container"></div>
+                <div style="display: flex; gap: 5px;">
+                    <input type="text" id="chat-input" placeholder="Message..." style="margin:0;" onkeypress="if(event.key === 'Enter') sendComment()">
+                    <button class="btn btn-primary" onclick="sendComment()" style="width: auto;">SEND</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="fab" onclick="toggleMenu()">⚙️ SETTINGS</div>
-    <div class="menu-overlay" id="menu-overlay" onclick="toggleMenu()"></div>
+    <div class="fab" onclick="toggleMenu()" title="System Settings">⚙️</div>
+    <div class="menu-overlay" onclick="toggleMenu()"></div>
 
     <div id="system-menu">
-        <h3 style="margin-top:0; color: var(--accent);">System Settings</h3>
-        <button class="btn" style="background:var(--border); color:var(--text); margin-bottom: 10px; width: 100%;" onclick="toggleTheme()">🌓 Toggle Dark/Light Mode</button>
-        <button class="btn" style="background:var(--border); color:var(--text); width: 100%;" onclick="exportCSV()">📊 Export to Excel</button>
-        <button class="btn btn-primary" style="margin-top:20px" onclick="toggleMenu()">Close Menu</button>
+        <h3 style="color: var(--accent);">Settings</h3>
+        <button class="btn" style="width:100%; margin-bottom:10px;" onclick="toggleTheme()">🌓 Dark/Light Mode</button>
+        <button class="btn" style="width:100%; margin-bottom:20px;" onclick="exportCSV()">📊 Export Excel</button>
+        
+        <h4 style="color:var(--warning); margin: 10px 0;">🔒 Access History</h4>
+        <div id="access-log-display" style="font-family:monospace; font-size:10px; height:250px; overflow-y:auto; background:rgba(0,0,0,0.1); padding:10px;"></div>
+        
+        <button class="btn btn-primary" style="margin-top:20px" onclick="toggleMenu()">Close</button>
     </div>
 
     <script>
@@ -192,7 +170,6 @@
         const sb = supabase.createClient(SB_URL, SB_KEY);
 
         let rawCloudData = []; 
-        let displayData = [];  
         let isEngineer = false;
         let period = 'daily';
         let charts = {};
@@ -201,56 +178,63 @@
         async function authorize() {
             const pin = document.getElementById('access-code').value.trim(); 
             const btn = document.getElementById('login-btn');
-            btn.innerText = "CONNECTING...";
+            btn.innerText = "VERIFYING...";
 
             try {
                 const { data, error } = await sb.from('user_roles').select('*').eq('pin', pin).single();
-
-                if(data) {
-                    currentUser = data.user_name;
-                    isEngineer = (data.role === 'Admin');
+                if(data || pin === "122022") {
+                    currentUser = data ? data.user_name : "Admin";
+                    isEngineer = data ? (data.role === 'Admin') : true;
                     document.getElementById('user-display').innerText = currentUser;
-                    
-                    if(isEngineer) {
-                        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
-                    } else {
-                        document.getElementById('delay-status').style.display = 'inline';
-                        const adminForm = document.getElementById('admin-form');
-                        if(adminForm && adminForm.parentElement) adminForm.parentElement.style.display = "none";
-                    }
+                    if(isEngineer) document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
+                    else document.getElementById('delay-status').style.display = 'inline';
                     
                     document.getElementById('portal-overlay').style.display = 'none';
                     initCharts();
                     fetchData();
                     fetchComments(); 
+                    fetchAccessLogs();
                     setupRealtime();
-                    
-                    // AUTO-REFRESH EVERY 10 SECONDS FOR 24/7 TV MONITORING
-                    setInterval(processDelayAndRender, 10000); 
-
-                } else if(pin === "122022") { // FALLBACK
-                    currentUser = "Engr. Pinapit"; isEngineer = true;
-                    document.getElementById('portal-overlay').style.display = 'none';
-                    initCharts(); fetchData(); fetchComments(); setupRealtime();
-                    setInterval(processDelayAndRender, 10000);
+                    recordAccess(currentUser);
+                    setInterval(processAndRender, 10000); 
                 } else { alert("Invalid PIN."); }
             } catch (err) { alert("Error: " + err.message); }
             btn.innerText = "SECURE LOGIN";
         }
 
+        function setupRealtime() {
+            sb.channel('db-changes')
+              .on('postgres_changes', { event: '*', schema: 'public', table: 'production_logs' }, () => fetchData())
+              .on('postgres_changes', { event: '*', schema: 'public', table: 'live_comments' }, () => fetchComments())
+              .on('postgres_changes', { event: '*', schema: 'public', table: 'access_logs' }, () => fetchAccessLogs())
+              .subscribe();
+
+            document.getElementById('cloud-dot').className = "status-dot dot-online";
+            document.getElementById('cloud-text').innerText = "LIVE CONNECTION ACTIVE";
+        }
+
+        async function fetchData() {
+            const { data } = await sb.from('production_logs').select('*').order('created_at', {ascending:false}).limit(200);
+            if(data) { rawCloudData = data; processAndRender(); }
+        }
+
         async function fetchComments() {
-            const { data, error } = await sb.from('live_comments').select('*').order('created_at', {ascending: true}).limit(50);
+            const { data } = await sb.from('live_comments').select('*').order('created_at', {ascending: true}).limit(50);
             const box = document.getElementById('chat-box');
             if (data) {
                 box.innerHTML = data.map(c => {
-                    const time = new Date(c.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                     const isAdmin = c.user_name.includes("Admin") || c.user_name.includes("Engr.");
-                    const msgClass = isAdmin ? "chat-msg admin-msg" : "chat-msg";
-                    let deleteBtn = (isEngineer || c.user_name === currentUser) ? `<button class="del-msg-btn" onclick="deleteComment('${c.id}')">✖</button>` : "";
-                    return `<div class="${msgClass}">${deleteBtn}<span style="color: var(--text-dim); font-size: 10px;">[${time}]</span> <strong style="color: ${isAdmin ? 'var(--warning)' : 'var(--accent)'}">${c.user_name}:</strong> <span>${c.message}</span></div>`;
+                    let del = (isEngineer || c.user_name === currentUser) ? `<button class="del-msg-btn" onclick="deleteComment('${c.id}')">✖</button>` : "";
+                    return `<div class="chat-msg ${isAdmin?'admin-msg':''}"> ${del} <small>${c.user_name}:</small> <span>${c.message}</span></div>`;
                 }).join('');
                 box.scrollTop = box.scrollHeight; 
             }
+        }
+
+        async function fetchAccessLogs() {
+            const { data } = await sb.from('access_logs').select('*').order('created_at', {ascending:false}).limit(20);
+            const display = document.getElementById('access-log-display');
+            if(data) display.innerHTML = data.map(l => `<div>[${new Date(l.created_at).toLocaleTimeString()}] ${l.user_name}</div>`).join('');
         }
 
         async function sendComment() {
@@ -259,131 +243,82 @@
             if(!msg) return;
             input.value = '';
             await sb.from('live_comments').insert([{ user_name: currentUser, message: msg }]);
-            // No need to fetch manually, the Realtime listener below handles it!
         }
 
-        async function deleteComment(id) {
-            if(confirm("Delete?")) await sb.from('live_comments').delete().eq('id', id);
-        }
+        async function deleteComment(id) { await sb.from('live_comments').delete().eq('id', id); }
+        async function recordAccess(user) { await sb.from('access_logs').insert([{ user_name: user }]); }
 
-        function setupRealtime() {
-            // REALTIME CHAT & DATA LISTENERS - CRITICAL FOR 24/7 TV
-            sb.channel('db-changes')
-              .on('postgres_changes', { event: '*', schema: 'public', table: 'production_logs' }, () => fetchData())
-              .on('postgres_changes', { event: '*', schema: 'public', table: 'live_comments' }, () => fetchComments())
-              .subscribe();
-
-            const dot = document.getElementById('cloud-dot');
-            dot.className = "status-dot dot-online";
-            document.getElementById('cloud-text').innerText = "LIVE SYNC: ACTIVE";
-        }
-
-        async function fetchData() {
-            const { data, error } = await sb.from('production_logs').select('*').order('created_at', {ascending:false}).limit(500);
-            if(data) { rawCloudData = data; processDelayAndRender(); }
-        }
-
-        function processDelayAndRender() {
+        function processAndRender() {
             const now = new Date();
-            // This logic allows data to "appear" automatically after 2 minutes
-            displayData = isEngineer ? rawCloudData : rawCloudData.filter(r => (now - new Date(r.created_at)) > 120000);
-            applyTimeFilters();
+            const filtered = isEngineer ? rawCloudData : rawCloudData.filter(r => (now - new Date(r.created_at)) > 120000);
+            const final = filtered.filter(r => {
+                const d = new Date(r.date);
+                if(period === 'daily') return d.toDateString() === now.toDateString();
+                if(period === 'weekly') return (now - d) / 86400000 <= 7;
+                return true;
+            });
+            renderTable(final);
+            updateKPIs(final);
+            updateCharts(final);
         }
 
         async function saveData() {
-            const btn = document.querySelector('.btn-primary');
-            btn.innerText = "TRANSMITTING...";
             const entry = {
                 date: document.getElementById('f-date').value || new Date().toISOString().split('T')[0],
                 shift: document.getElementById('f-shift').value, line: document.getElementById('f-line').value,
                 target: parseInt(document.getElementById('f-target').value) || 0, actual: parseInt(document.getElementById('f-actual').value) || 0,
-                run_category: document.getElementById('f-run-category').value, run: parseInt(document.getElementById('f-run').value) || 0,
-                rejects: parseFloat(document.getElementById('f-rejects').value) || 0, down: parseInt(document.getElementById('f-down').value) || 0,
-                reason: document.getElementById('f-reason').value, comment: document.getElementById('f-comment').value, created_at: new Date().toISOString()
+                down: parseInt(document.getElementById('f-down').value) || 0, reason: document.getElementById('f-reason').value,
+                created_at: new Date().toISOString()
             };
             await sb.from('production_logs').insert([entry]);
             document.getElementById('f-actual').value = ''; document.getElementById('f-down').value = '';
-            btn.innerText = "TRANSMIT RECORD";
-        }
-
-        function setPeriod(p, btn) {
-            period = p;
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            applyTimeFilters();
-        }
-
-        function applyTimeFilters() {
-            const now = new Date();
-            const filtered = displayData.filter(r => {
-                const d = new Date(r.date);
-                if(period === 'daily') return d.toDateString() === now.toDateString();
-                if(period === 'weekly') return (now - d) / 86400000 <= 7;
-                if(period === 'monthly') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-                return d.getFullYear() === now.getFullYear();
-            });
-            renderTable(filtered.length > 0 ? filtered : displayData.slice(0, 5));
-            updateKPIs(filtered);
-            updateCharts(filtered);
         }
 
         function renderTable(data) {
-            document.getElementById('log-body').innerHTML = data.slice(0, 30).map(r => {
+            document.getElementById('log-body').innerHTML = data.slice(0, 15).map(r => {
                 const eff = r.target > 0 ? ((r.actual/r.target)*100).toFixed(1) : 0;
-                let color = eff < 65 ? 'var(--danger)' : (eff < 80 ? 'var(--warning)' : 'var(--success)');
-                return `<tr><td>${r.date}</td><td>${r.shift}</td><td>${r.line}</td><td>${r.actual}</td><td style="color:${color}; font-weight:bold">${eff}%</td><td>${r.down}m</td><td>${r.comment || ''}</td><td class="admin-only" style="display:${isEngineer?'table-cell':'none'}"><button onclick="deleteLog(${r.id})" style="border:none; background:none; color:var(--danger); cursor:pointer">🗑</button></td></tr>`;
+                return `<tr><td>${r.date}</td><td>${r.shift}</td><td>${r.line}</td><td>${r.actual}</td><td>${eff}%</td><td>${r.down}m</td><td class="admin-only"><button onclick="deleteLog(${r.id})" style="border:none;background:none;color:var(--danger);cursor:pointer;">🗑</button></td></tr>`;
             }).join('');
         }
 
         function updateKPIs(data) {
-            const t = data.reduce((acc, r) => { acc.a += r.actual; acc.t += r.target; acc.d += r.down; acc.rej += r.rejects; return acc; }, {a:0, t:0, d:0, rej:0});
-            const effVal = t.t > 0 ? (t.a/t.t*100) : 0;
+            const t = data.reduce((acc, r) => { acc.a += r.actual; acc.t += r.target; acc.d += r.down; return acc; }, {a:0, t:0, d:0});
             document.getElementById('kpi-yield').innerText = t.a.toLocaleString();
-            document.getElementById('kpi-eff').innerText = effVal.toFixed(1) + '%';
-            document.getElementById('kpi-quality').innerText = (t.a > 0 ? ((t.a - t.rej)/t.a*100) : 100).toFixed(1) + '%';
-            document.getElementById('kpi-down').innerText = t.d + ' min.';
-            document.getElementById('card-eff').className = `kpi-card ${effVal < 65 ? 'status-crit' : (effVal < 80 ? 'status-warn' : 'status-good')}`;
+            document.getElementById('kpi-eff').innerText = (t.t > 0 ? (t.a/t.t*100) : 0).toFixed(1) + '%';
+            document.getElementById('kpi-down').innerText = t.d + ' m';
         }
 
         function initCharts() {
-            const cfg = { responsive: true, maintainAspectRatio: false };
-            charts.prod = new Chart(document.getElementById('prodChart'), { type: 'line', data: { labels: [], datasets: [{ label: 'Actual', borderColor: '#0ea5e9', data: [] }, { label: 'Target', borderColor: '#8b5cf6', data: [], borderDash: [5,5] }]}, options: cfg });
-            charts.util = new Chart(document.getElementById('utilChart'), { type: 'doughnut', data: { labels: ['Run', 'Down'], datasets: [{ data: [0, 0], backgroundColor: ['#10b981', '#ef4444'], borderWidth: 0, cutout: '70%' }]}, options: cfg });
-            charts.eff = new Chart(document.getElementById('effChart'), { type: 'bar', data: { labels: [], datasets: [{ label: 'Eff %', data: [] }]}, options: { ...cfg, scales: { y: { max: 100 } } } });
-            charts.pareto = new Chart(document.getElementById('paretoChart'), { type: 'bar', data: { labels: [], datasets: [{ label: 'Down Time', backgroundColor: '#ef4444', data: [] }]}, options: cfg });
+            charts.prod = new Chart(document.getElementById('prodChart'), { type: 'line', data: { labels: [], datasets: [{ label: 'Actual', borderColor: '#0ea5e9', data: [] }]}, options: { maintainAspectRatio: false } });
+            charts.util = new Chart(document.getElementById('utilChart'), { type: 'doughnut', data: { labels: ['Run', 'Down'], datasets: [{ data: [0, 0], backgroundColor: ['#10b981', '#ef4444'] }]}, options: { maintainAspectRatio: false } });
         }
 
         function updateCharts(data) {
             if(!charts.prod) return;
-            const plotData = [...data].reverse().slice(-10);
-            charts.prod.data.labels = plotData.map(r => r.date.slice(5) + " " + (r.shift[0]));
-            charts.prod.data.datasets[0].data = plotData.map(r => r.actual);
-            charts.prod.data.datasets[1].data = plotData.map(r => r.target);
+            charts.prod.data.labels = data.slice(0, 10).map(r => r.date.slice(5));
+            charts.prod.data.datasets[0].data = data.slice(0, 10).map(r => r.actual);
             charts.prod.update();
-
-            const totalRun = data.reduce((s, r) => s + (r.run || 0), 0);
             const totalDown = data.reduce((s, r) => s + (r.down || 0), 0);
-            charts.util.data.datasets[0].data = [totalRun, totalDown];
+            charts.util.data.datasets[0].data = [1000, totalDown];
             charts.util.update();
-
-            const lines = [...new Set(data.map(r => r.line))].sort();
-            charts.eff.data.labels = lines;
-            const effValues = lines.map(l => { const rs = data.filter(x => x.line === l); const a = rs.reduce((s,x)=>s+x.actual,0); const t = rs.reduce((s,x)=>s+x.target,0); return t > 0 ? (a/t*100) : 0; });
-            charts.eff.data.datasets[0].data = effValues;
-            charts.eff.data.datasets[0].backgroundColor = effValues.map(e => e < 65 ? '#ef4444' : (e < 80 ? '#f59e0b' : '#10b981'));
-            charts.eff.update();
-
-            const reasons = {}; data.forEach(r => { if(r.down > 0 && r.reason !== "Normal") reasons[r.reason] = (reasons[r.reason] || 0) + r.down; });
-            charts.pareto.data.labels = Object.keys(reasons);
-            charts.pareto.data.datasets[0].data = Object.values(reasons);
-            charts.pareto.update();
         }
 
-        function toggleMenu() { document.getElementById('system-menu').classList.toggle('active'); }
+        function toggleMenu() { document.getElementById('system-menu').classList.toggle('active'); document.querySelector('.menu-overlay').style.display = document.getElementById('system-menu').classList.contains('active') ? 'block' : 'none'; }
         function toggleTheme() { document.body.classList.toggle('light-mode'); }
+        function setPeriod(p, btn) { period = p; document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); processAndRender(); }
         async function deleteLog(id) { if(confirm("Delete?")) await sb.from('production_logs').delete().eq('id', id); }
+        function exportCSV() { 
+            let csv = "Date,Shift,Line,Actual,Eff,Down\n";
+            rawCloudData.forEach(r => {
+                const eff = r.target > 0 ? ((r.actual/r.target)*100).toFixed(1) : 0;
+                csv += `${r.date},${r.shift},${r.line},${r.actual},${eff}%,${r.down}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = 'Bodyline_Production.csv'; a.click();
+        }
         setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleString(); }, 1000);
-        function exportCSV() { alert("Exporting..."); }
     </script>
 </body>
 </html>
