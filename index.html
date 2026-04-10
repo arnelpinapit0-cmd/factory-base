@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bodyline Pro | Enterprise Edition v11.0</title>
+    <title>Bodyline Pro | Enterprise Edition v11.2</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -65,8 +65,12 @@
 
         /* CHAT BOX */
         .chat-container { height: 250px; overflow-y: auto; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-bottom: 10px; font-size: 12px; display: flex; flex-direction: column; gap: 8px; }
-        .chat-msg { padding: 8px; border-radius: 6px; background: rgba(255,255,255,0.02); border-left: 3px solid var(--accent); }
+        .chat-msg { padding: 8px; border-radius: 6px; background: rgba(255,255,255,0.02); border-left: 3px solid var(--accent); position: relative; }
         .chat-msg.admin-msg { border-left-color: var(--warning); background: rgba(245, 158, 11, 0.05); }
+        
+        /* DELETE BUTTON FOR CHAT */
+        .del-msg-btn { position: absolute; right: 5px; top: 5px; background: none; border: none; color: var(--danger); cursor: pointer; font-size: 10px; opacity: 0.5; transition: 0.2s; padding: 5px; }
+        .del-msg-btn:hover { opacity: 1; transform: scale(1.2); }
 
         /* SETTINGS MENU & FAB */
         #system-menu { position: fixed; top: 0; right: -400px; width: 350px; height: 100%; background: var(--surface); border-left: 2px solid var(--accent); z-index: 2001; transition: 0.4s; padding: 25px; box-sizing: border-box; visibility: hidden; box-shadow: -10px 0 30px rgba(0,0,0,0.5); overflow-y: auto;}
@@ -95,7 +99,7 @@
     <div id="portal-overlay">
         <div class="auth-card">
             <h2 style="margin:0; color:var(--accent)">BODYLINE LOGIN</h2>
-            <p style="font-size: 12px; color:var(--text-dim)">v11.0 Interactive Edition</p>
+            <p style="font-size: 12px; color:var(--text-dim)">v11.2 Enterprise Comms</p>
             <input type="password" id="access-code" placeholder="PIN CODE">
             <button class="btn btn-primary" id="login-btn" onclick="authorize()" style="padding: 15px; font-size: 16px;">SECURE LOGIN</button>
         </div>
@@ -171,8 +175,8 @@
             </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px;">
-            <div class="panel">
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px;" id="bottom-section">
+            <div class="panel" style="overflow: hidden;">
                 <h3 style="margin:0 0 10px 0;">Master Log Database</h3>
                 <div style="overflow-x:auto; height: 300px;">
                     <table id="log-table">
@@ -230,48 +234,54 @@
         Chart.defaults.color = '#94a3b8';
         Chart.defaults.font.family = 'Inter';
 
+        // --- BULLETPROOF LOGIN LOGIC ---
         async function authorize() {
-            const pin = document.getElementById('access-code').value;
+            // Added .trim() to catch accidental invisible spaces typed after the PIN
+            const pin = document.getElementById('access-code').value.trim(); 
             const btn = document.getElementById('login-btn');
             btn.innerText = "AUTHENTICATING...";
 
-            const { data, error } = await sb.from('user_roles').select('*').eq('pin', pin).single();
+            try {
+                const { data, error } = await sb.from('user_roles').select('*').eq('pin', pin).single();
 
-            if(data) {
-                currentUser = data.user_name;
-                isEngineer = (data.role === 'Admin');
+                if(data) {
+                    currentUser = data.user_name;
+                    isEngineer = (data.role === 'Admin');
 
-                document.getElementById('user-display').innerText = currentUser;
-                
-                if(isEngineer) {
-                    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
-                } else {
-                    document.getElementById('delay-status').style.display = 'inline';
-                    // Re-adjust grid if viewer so master log and chat look good
-                    document.querySelector('.chart-row:last-of-type').style.display = "none";
-                }
-                
-                document.getElementById('portal-overlay').style.display = 'none';
-                
-                recordGlobalAccess(currentUser);
-                initCharts();
-                fetchData();
-                fetchComments(); // Load Chat History
-                setupRealtime();
-                setInterval(processDelayAndRender, 10000); 
-
-            } else {
-                if(pin === "122022") {
-                    alert("WARNING: Using Fallback Admin PIN. Please create 'user_roles' table.");
-                    currentUser = "Engr. Pinapit (Fallback)";
-                    isEngineer = true;
-                    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
                     document.getElementById('user-display').innerText = currentUser;
+                    
+                    if(isEngineer) {
+                        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
+                    } else {
+                        document.getElementById('delay-status').style.display = 'inline';
+                        document.querySelector('.chart-row:last-of-type').style.display = "none";
+                    }
+                    
                     document.getElementById('portal-overlay').style.display = 'none';
-                    initCharts(); fetchData(); fetchComments(); setupRealtime();
+                    
+                    recordGlobalAccess(currentUser);
+                    initCharts();
+                    fetchData();
+                    fetchComments(); 
+                    setupRealtime();
+                    setInterval(processDelayAndRender, 10000); 
+
                 } else {
-                    alert("Invalid PIN or Database Table Missing.");
+                    if(pin === "122022") {
+                        alert("WARNING: Using Fallback Admin PIN.");
+                        currentUser = "Engr. Pinapit (Fallback)";
+                        isEngineer = true;
+                        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
+                        document.getElementById('user-display').innerText = currentUser;
+                        document.getElementById('portal-overlay').style.display = 'none';
+                        initCharts(); fetchData(); fetchComments(); setupRealtime();
+                    } else {
+                        alert("Invalid PIN. Please make sure there are no typos.");
+                    }
                 }
+            } catch (err) {
+                console.error(err);
+                alert("Connection Error. Could not verify PIN. Please check your internet connection.");
             }
             btn.innerText = "SECURE LOGIN";
         }
@@ -282,13 +292,10 @@
             const msg = input.value.trim();
             if(!msg) return;
             
-            input.value = ''; // Clear box immediately
+            input.value = ''; 
             const { error } = await sb.from('live_comments').insert([{ user_name: currentUser, message: msg }]);
-            if(error) {
-                alert("Could not send message. Please create 'live_comments' table in Supabase.");
-            } else {
-                fetchComments(); // Pull back instantly
-            }
+            if(error) alert("Could not send message. Please ensure 'live_comments' table exists.");
+            else fetchComments(); 
         }
 
         async function fetchComments() {
@@ -296,7 +303,7 @@
             const box = document.getElementById('chat-box');
             
             if(error) {
-                box.innerHTML = `<div style="color:var(--warning); text-align:center; padding: 20px;">⚠️ Chat unavailable.<br>Admin: Create 'live_comments' table in Supabase (Columns: id, user_name, message, created_at).</div>`;
+                box.innerHTML = `<div style="color:var(--warning); text-align:center; padding: 20px;">⚠️ Chat unavailable.<br>Admin: Create 'live_comments' table.</div>`;
             } else if (data) {
                 box.innerHTML = data.map(c => {
                     const time = new Date(c.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
@@ -304,13 +311,27 @@
                     const msgClass = isAdmin ? "chat-msg admin-msg" : "chat-msg";
                     const nameColor = isAdmin ? "var(--warning)" : "var(--accent)";
                     
+                    // Logic to show delete button (Admins see it for all, Viewers see it for their own)
+                    let deleteBtnHTML = "";
+                    if (isEngineer || c.user_name === currentUser) {
+                        deleteBtnHTML = `<button class="del-msg-btn" onclick="deleteComment('${c.id}')" title="Delete message">✖</button>`;
+                    }
+                    
                     return `<div class="${msgClass}">
+                        ${deleteBtnHTML}
                         <span style="color: var(--text-dim); font-size: 10px; margin-right: 5px;">[${time}]</span>
                         <strong style="color: ${nameColor};">${c.user_name}:</strong>
-                        <span style="color: var(--text); line-height: 1.4;">${c.message}</span>
+                        <span style="color: var(--text); line-height: 1.4; padding-right: 20px; display: inline-block;">${c.message}</span>
                     </div>`;
                 }).join('');
-                box.scrollTop = box.scrollHeight; // Auto-scroll to bottom
+                box.scrollTop = box.scrollHeight; 
+            }
+        }
+
+        async function deleteComment(id) {
+            if(confirm("Delete this message?")) {
+                await sb.from('live_comments').delete().eq('id', id);
+                fetchComments(); // Pull updated list instantly
             }
         }
 
@@ -354,7 +375,6 @@
                 }
             });
 
-            // Listen to BOTH production data and live comments
             sb.channel('custom-all-channel')
               .on('postgres_changes', { event: '*', schema: 'public', table: 'production_logs' }, () => { fetchData(); })
               .on('postgres_changes', { event: '*', schema: 'public', table: 'live_comments' }, () => { fetchComments(); })
@@ -472,7 +492,7 @@
                     <td style="color:${r.down > 30 ? 'var(--danger)' : 'inherit'}">${r.down || 0} min.</td>
                     <td style="font-style:italic; font-size:10px; opacity:0.8">${r.comment || ''}</td>
                     <td class="admin-only" style="display:${isEngineer ? 'table-cell' : 'none'}">
-                        <button onclick="deleteRow(${r.id})" style="color:var(--danger); border:none; background:none; cursor:pointer">🗑</button>
+                        <button onclick="deleteLog(${r.id})" style="color:var(--danger); border:none; background:none; cursor:pointer">🗑</button>
                     </td>
                 </tr>`;
             }).join('');
@@ -501,7 +521,6 @@
                 type: 'line', data: { labels: [], datasets: [{ label: 'Actual', borderColor: '#0ea5e9', data: [] }, { label: 'Target', borderColor: '#8b5cf6', data: [], borderDash: [5,5] }]}, options: cfg
             });
             
-            // DOUGHNUT CHART FOR RUN VS DOWN TIME
             charts.util = new Chart(document.getElementById('utilChart'), {
                 type: 'doughnut', data: { labels: ['Total Run Time', 'Total Down Time'], datasets: [
                     { data: [0, 0], backgroundColor: ['#10b981', '#ef4444'], borderWidth: 0, cutout: '75%' }
@@ -520,7 +539,6 @@
         function updateCharts(data) {
             if(!charts.prod) return;
             
-            // Prod Line Chart
             const plotData = [...data].reverse().slice(-10);
             const labels = plotData.map(r => (r.date ? r.date.slice(5) : '') + " " + (r.shift === 'Day Shift' ? 'D' : 'N'));
             charts.prod.data.labels = labels;
@@ -528,13 +546,11 @@
             charts.prod.data.datasets[1].data = plotData.map(r => r.target);
             charts.prod.update();
 
-            // Doughnut Chart (Total Utilization)
             const totalRun = data.reduce((sum, r) => sum + (r.run || 0), 0);
             const totalDown = data.reduce((sum, r) => sum + (r.down || 0), 0);
             charts.util.data.datasets[0].data = [totalRun, totalDown];
             charts.util.update();
 
-            // Efficiency Chart
             const lines = [...new Set(data.map(r => r.line))].sort();
             charts.eff.data.labels = lines;
             const effValues = lines.map(l => {
@@ -551,7 +567,6 @@
             });
             charts.eff.update();
 
-            // Pareto Chart
             const reasons = {};
             data.forEach(r => { if(r.down > 0 && r.reason !== "Normal") reasons[r.reason] = (reasons[r.reason] || 0) + r.down; });
             charts.pareto.data.labels = Object.keys(reasons);
@@ -580,7 +595,7 @@
             overlay.style.display = isActive ? 'block' : 'none';
         }
         function toggleTheme() { document.body.classList.toggle('light-mode'); }
-        async function deleteRow(id) { if(confirm("Delete?")) { await sb.from('production_logs').delete().eq('id', id); fetchData(); } }
+        async function deleteLog(id) { if(confirm("Delete this log?")) { await sb.from('production_logs').delete().eq('id', id); fetchData(); } }
         setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleString(); }, 1000);
     </script>
 </body>
