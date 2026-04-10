@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bodyline Pro | v11.9 - Hard Sync</title>
+    <title>Bodyline Pro | v12.0 Abrupt-Sync</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -28,12 +28,8 @@
         .auth-card input { width: 100%; padding: 15px; background: #000; border: 1px solid var(--border); color: var(--success); font-size: 20px; text-align: center; border-radius: 8px; margin: 20px 0; letter-spacing: 5px; }
 
         .header-banner { text-align: center; padding: 25px 15px 15px 15px; background: var(--surface); border-bottom: 2px solid var(--accent); }
-        .tabs { display: flex; gap: 10px; justify-content: center; margin: 15px 0; }
-        .tab-btn { padding: 8px 20px; background: var(--surface); border: 1px solid var(--border); color: var(--text-dim); border-radius: 20px; cursor: pointer; font-weight: bold; }
-        .tab-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
-
         .main-content { padding: 0 15px 30px 15px; max-width: 1600px; margin: auto; }
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 15px; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 15px 0; }
         .kpi-card { background: var(--surface); border: 1px solid var(--border); padding: 15px; border-radius: 10px; text-align: center; }
         
         .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
@@ -45,16 +41,16 @@
         .btn-primary { background: var(--accent); color: white; width: 100%; }
 
         table { width: 100%; border-collapse: collapse; font-size: 11px; }
-        th { text-align: left; padding: 8px; border-bottom: 1px solid var(--border); color: var(--text-dim); text-transform: uppercase; }
+        th { text-align: left; padding: 8px; border-bottom: 1px solid var(--border); color: var(--text-dim); }
         td { padding: 8px; border-bottom: 1px solid var(--border); }
         .admin-only { display: none; }
 
         .chat-container { height: 250px; overflow-y: auto; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-bottom: 10px; font-size: 12px; display: flex; flex-direction: column; gap: 8px; scroll-behavior: smooth;}
-        .chat-msg { padding: 8px; border-radius: 6px; background: rgba(255,255,255,0.02); border-left: 3px solid var(--accent); position: relative; }
-        .chat-msg.admin-msg { border-left-color: var(--warning); background: rgba(245, 158, 11, 0.05); }
+        .chat-msg { padding: 8px; border-radius: 6px; background: rgba(255,255,255,0.02); border-left: 3px solid var(--accent); position: relative; animation: slideIn 0.2s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
         .del-msg-btn { position: absolute; right: 5px; top: 5px; background: none; border: none; color: var(--danger); cursor: pointer; font-size: 10px; }
 
-        .fab { position: fixed; bottom: 20px; left: 20px; width: 45px; height: 45px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1000; color: white; font-size: 24px; border: 2px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: 0.3s; }
+        .fab { position: fixed; bottom: 20px; left: 20px; width: 45px; height: 45px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1000; color: white; font-size: 24px; border: 2px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         #system-menu { position: fixed; top: 0; right: -400px; width: 350px; height: 100%; background: var(--surface); border-left: 2px solid var(--accent); z-index: 2001; transition: 0.4s; padding: 25px; box-sizing: border-box; visibility: hidden; overflow-y: auto;}
         #system-menu.active { right: 0; visibility: visible; }
         .menu-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; display: none; }
@@ -64,13 +60,13 @@
 
     <div class="cloud-status">
         <div id="cloud-dot" class="status-dot dot-offline"></div>
-        <span id="cloud-text">CONNECTING...</span>
+        <span id="cloud-text">OFFLINE</span>
     </div>
 
     <div id="portal-overlay">
         <div class="auth-card">
             <h2 style="margin:0; color:var(--accent)">BODYLINE LOGIN</h2>
-            <p style="font-size: 12px; color:var(--text-dim)">v11.9 Hard-Sync Edition</p>
+            <p style="font-size: 12px; color:var(--text-dim)">v12.0 Abrupt-Sync Edition</p>
             <input type="password" id="access-code" placeholder="PIN CODE">
             <button class="btn btn-primary" id="login-btn" onclick="authorize()" style="padding: 15px; font-size: 16px;">SECURE LOGIN</button>
         </div>
@@ -79,24 +75,17 @@
     <div class="header-banner">
         <h1 style="margin:0; letter-spacing: 2px; font-size: 24px;">BODYLINE PRODUCTION</h1>
         <div style="display: flex; justify-content: center; gap: 15px; margin-top: 5px; font-size: 11px;">
-            <span id="user-display" style="font-weight: bold; color: var(--accent);">Viewer Mode</span>
+            <span id="user-display" style="font-weight: bold; color: var(--accent);">Connecting...</span>
             <span id="live-clock" style="font-family: monospace;"></span>
         </div>
     </div>
 
-    <div class="tabs">
-        <button class="tab-btn active" onclick="setPeriod('daily', this)">Daily</button>
-        <button class="tab-btn" onclick="setPeriod('weekly', this)">Weekly</button>
-        <button class="tab-btn" onclick="setPeriod('monthly', this)">Monthly</button>
-        <button class="tab-btn" onclick="setPeriod('yearly', this)">Yearly</button>
-    </div>
-
     <div class="main-content">
         <div class="kpi-grid">
-            <div class="kpi-card" id="card-yield"><small>Total Yield</small><div id="kpi-yield" style="font-size:22px; font-weight:bold;">0</div></div>
-            <div class="kpi-card" id="card-eff"><small>Avg Efficiency</small><div id="kpi-eff" style="font-size:22px; font-weight:bold;">0%</div></div>
-            <div class="kpi-card" id="card-quality"><small>OEE Quality</small><div id="kpi-quality" style="font-size:22px; font-weight:bold;">0%</div></div>
-            <div class="kpi-card" id="card-down"><small>Total Downtime</small><div id="kpi-down" style="font-size:22px; font-weight:bold;">0 min.</div></div>
+            <div class="kpi-card"><small>Total Yield</small><div id="kpi-yield" style="font-size:22px; font-weight:bold;">0</div></div>
+            <div class="kpi-card"><small>Avg Efficiency</small><div id="kpi-eff" style="font-size:22px; font-weight:bold;">0%</div></div>
+            <div class="kpi-card"><small>OEE Quality</small><div id="kpi-quality" style="font-size:22px; font-weight:bold;">0%</div></div>
+            <div class="kpi-card"><small>Total Downtime</small><div id="kpi-down" style="font-size:22px; font-weight:bold;">0 min.</div></div>
         </div>
 
         <div class="chart-row">
@@ -104,14 +93,9 @@
             <div class="panel"><h3 style="margin:0 0 5px 0; font-size:12px;">Utilization Ratio</h3><div style="height: 200px;"><canvas id="utilChart"></canvas></div></div>
         </div>
 
-        <div class="chart-row">
-            <div class="panel"><h3 style="margin:0 0 5px 0; font-size:12px;">Efficiency per Line</h3><div style="height: 200px;"><canvas id="effChart"></canvas></div></div>
-            <div class="panel"><h3 style="margin:0 0 5px 0; font-size:12px;">Downtime Pareto</h3><div style="height: 200px;"><canvas id="paretoChart"></canvas></div></div>
-        </div>
-
         <div class="chart-row admin-only" id="admin-form-container">
             <div class="panel" id="admin-form">
-                <h3 style="margin:0 0 10px 0; color:var(--accent); font-size: 14px;">Data Entry (ADMIN)</h3>
+                <h3 style="margin:0 0 10px 0; color:var(--accent); font-size: 14px;">Abrupt Data Entry</h3>
                 <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
                     <input type="date" id="f-date">
                     <select id="f-shift"><option>Day Shift</option><option>Night Shift</option></select>
@@ -122,14 +106,13 @@
                     <input type="number" id="f-run" placeholder="RunTime" value="480">
                     <input type="number" id="f-down" placeholder="DownTime">
                 </div>
-                <textarea id="f-comment" placeholder="Details..."></textarea>
-                <button class="btn btn-primary" id="transmit-btn" onclick="saveData()" style="margin-top:10px;">TRANSMIT (HARD SYNC)</button>
+                <button class="btn btn-primary" id="transmit-btn" onclick="saveData()" style="margin-top:10px;">TRANSMIT TO CLOUD</button>
             </div>
         </div>
 
         <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px;">
             <div class="panel">
-                <h3 style="margin:0 0 10px 0;">Live Database Log</h3>
+                <h3 style="margin:0 0 10px 0;">Live Master Log</h3>
                 <div style="overflow-y:auto; height: 300px;">
                     <table id="log-table">
                         <thead><tr><th>Date</th><th>Line</th><th>Actual</th><th>Eff%</th><th>Down</th><th class="admin-only">X</th></tr></thead>
@@ -139,10 +122,10 @@
             </div>
 
             <div class="panel">
-                <h3 style="margin:0 0 10px 0; color: var(--accent);">💬 Instant Comms</h3>
+                <h3 style="margin:0 0 10px 0; color: var(--accent);">💬 Instant Team Comms</h3>
                 <div id="chat-box" class="chat-container"></div>
                 <div style="display: flex; gap: 5px;">
-                    <input type="text" id="chat-input" placeholder="Message..." style="margin:0;" onkeypress="if(event.key === 'Enter') sendComment()">
+                    <input type="text" id="chat-input" placeholder="Type a message..." style="margin:0;" onkeypress="if(event.key === 'Enter') sendComment()">
                     <button class="btn btn-primary" onclick="sendComment()" style="width: auto;">SEND</button>
                 </div>
             </div>
@@ -153,15 +136,12 @@
     <div class="menu-overlay" onclick="toggleMenu()"></div>
 
     <div id="system-menu">
-        <h3 style="color: var(--accent);">Settings</h3>
-        <button class="btn" style="width:100%; margin-bottom:10px;" onclick="toggleTheme()">🌓 Toggle Theme</button>
-        <button class="btn" style="width:100%; margin-bottom:20px;" onclick="exportCSV()">📊 Export Excel</button>
-        
+        <h3 style="color: var(--accent);">System Settings</h3>
+        <button class="btn" style="width:100%; margin-bottom:10px;" onclick="toggleTheme()">🌓 Toggle Dark/Light</button>
         <div id="admin-monitor-section" style="display:none;">
             <h4 style="color:var(--warning); margin: 10px 0;">🔒 Security: Access Logs</h4>
             <div id="access-log-display" style="font-family:monospace; font-size:10px; height:250px; overflow-y:auto; background:rgba(0,0,0,0.1); padding:10px;"></div>
         </div>
-        
         <button class="btn btn-primary" style="margin-top:20px" onclick="toggleMenu()">Close</button>
     </div>
 
@@ -172,14 +152,13 @@
 
         let rawCloudData = []; 
         let isEngineer = false;
-        let period = 'daily';
         let charts = {};
         let currentUser = "";
 
         async function authorize() {
             const pin = document.getElementById('access-code').value.trim(); 
             const btn = document.getElementById('login-btn');
-            btn.innerText = "OPENING SECURE CHANNEL...";
+            btn.innerText = "OPENING SECURE PORTAL...";
 
             try {
                 const { data } = await sb.from('user_roles').select('*').eq('pin', pin).single();
@@ -201,8 +180,8 @@
                     fetchComments(); 
                     setupRealtime(); 
                     recordAccess(currentUser);
-                } else { alert("Invalid PIN."); }
-            } catch (err) { alert("Secure login failed."); }
+                } else { alert("Access Denied."); }
+            } catch (err) { alert("Database Connection Error."); }
             btn.innerText = "SECURE LOGIN";
         }
 
@@ -214,11 +193,11 @@
               .subscribe();
 
             document.getElementById('cloud-dot').className = "status-dot dot-online";
-            document.getElementById('cloud-text').innerText = "INSTANT SYNC ACTIVE";
+            document.getElementById('cloud-text').innerText = "ONLINE (LIVE SYNC)";
         }
 
         async function fetchData() {
-            const { data } = await sb.from('production_logs').select('*').order('created_at', {ascending:false}).limit(300);
+            const { data } = await sb.from('production_logs').select('*').order('created_at', {ascending:false}).limit(200);
             if(data) { rawCloudData = data; processAndRender(); }
         }
 
@@ -245,6 +224,12 @@
             const input = document.getElementById('chat-input');
             const msg = input.value.trim();
             if(!msg) return;
+            
+            // ABRUPT INJECTION: Put it on the screen immediately before the database even responds
+            const box = document.getElementById('chat-box');
+            box.innerHTML += `<div class="chat-msg" style="opacity: 0.5;"> <small>Sending...</small> <span>${msg}</span></div>`;
+            box.scrollTop = box.scrollHeight;
+
             input.value = '';
             await sb.from('live_comments').insert([{ user_name: currentUser, message: msg }]);
         }
@@ -253,45 +238,27 @@
         async function recordAccess(user) { await sb.from('access_logs').insert([{ user_name: user }]); }
 
         function processAndRender() {
-            const now = new Date();
-            const final = rawCloudData.filter(r => {
-                const d = new Date(r.date);
-                if(period === 'daily') return d.toDateString() === now.toDateString();
-                if(period === 'weekly') return (now - d) / 86400000 <= 7;
-                return true;
-            });
-            renderTable(final);
-            updateKPIs(final);
-            updateCharts(final);
+            renderTable(rawCloudData);
+            updateKPIs(rawCloudData);
+            updateCharts(rawCloudData);
         }
 
         async function saveData() {
             const btn = document.getElementById('transmit-btn');
-            const originalText = btn.innerText;
             btn.innerText = "UPLOADING...";
-            
             const entry = {
                 date: document.getElementById('f-date').value || new Date().toISOString().split('T')[0],
                 shift: document.getElementById('f-shift').value, line: document.getElementById('f-line').value,
                 target: parseInt(document.getElementById('f-target').value) || 0, actual: parseInt(document.getElementById('f-actual').value) || 0,
                 run: parseInt(document.getElementById('f-run').value) || 0, down: parseInt(document.getElementById('f-down').value) || 0,
-                reason: document.getElementById('f-reason').value, comment: document.getElementById('f-comment').value,
-                created_at: new Date().toISOString()
+                reason: document.getElementById('f-reason').value, created_at: new Date().toISOString()
             };
-
             const { error } = await sb.from('production_logs').insert([entry]);
-            
-            if(error) {
-                alert("Upload Failed: Check your internet connection.");
-                btn.innerText = originalText;
-            } else {
-                // HARD SYNC: Manually pull data right now for immediate feedback
-                await fetchData(); 
-                document.getElementById('f-actual').value = ''; 
-                document.getElementById('f-down').value = '';
+            if(!error) {
+                await fetchData(); // Abrupt refresh
                 btn.innerText = "SUCCESS!";
-                setTimeout(() => { btn.innerText = originalText; }, 2000);
-            }
+                setTimeout(() => { btn.innerText = "TRANSMIT TO CLOUD"; }, 2000);
+            } else { btn.innerText = "ERROR!"; }
         }
 
         function renderTable(data) {
@@ -303,9 +270,8 @@
 
         function updateKPIs(data) {
             const t = data.reduce((acc, r) => { acc.a += r.actual; acc.t += r.target; acc.d += r.down; return acc; }, {a:0, t:0, d:0});
-            const eff = t.t > 0 ? (t.a/t.t*100) : 0;
             document.getElementById('kpi-yield').innerText = t.a.toLocaleString();
-            document.getElementById('kpi-eff').innerText = eff.toFixed(1) + '%';
+            document.getElementById('kpi-eff').innerText = (t.t > 0 ? (t.a/t.t*100) : 0).toFixed(1) + '%';
             document.getElementById('kpi-down').innerText = t.d + ' m';
         }
 
@@ -313,39 +279,19 @@
             const cfg = { responsive: true, maintainAspectRatio: false };
             charts.prod = new Chart(document.getElementById('prodChart'), { type: 'line', data: { labels: [], datasets: [{ label: 'Actual', borderColor: '#0ea5e9', data: [] }, { label: 'Target', borderColor: '#8b5cf6', data: [], borderDash:[5,5] }]}, options: cfg });
             charts.util = new Chart(document.getElementById('utilChart'), { type: 'doughnut', data: { labels: ['Run', 'Down'], datasets: [{ data: [0, 0], backgroundColor: ['#10b981', '#ef4444'], cutout:'70%' }]}, options: cfg });
-            charts.eff = new Chart(document.getElementById('effChart'), { type: 'bar', data: { labels: [], datasets: [{ label: 'Eff %', data: [] }]}, options: { ...cfg, scales: { y: { max: 100 } } } });
-            charts.pareto = new Chart(document.getElementById('paretoChart'), { type: 'bar', data: { labels: [], datasets: [{ label: 'Minutes', backgroundColor: '#ef4444', data: [] }]}, options: cfg });
         }
 
         function updateCharts(data) {
             if(!charts.prod) return;
             const plotData = [...data].reverse().slice(-10);
-            charts.prod.data.labels = plotData.map(r => r.date.slice(5) + " " + r.shift[0]);
+            charts.prod.data.labels = plotData.map(r => r.date.slice(5));
             charts.prod.data.datasets[0].data = plotData.map(r => r.actual);
             charts.prod.data.datasets[1].data = plotData.map(r => r.target);
             charts.prod.update();
-
             const totalRun = data.reduce((s, r) => s + (r.run || 0), 0);
             const totalDown = data.reduce((s, r) => s + (r.down || 0), 0);
             charts.util.data.datasets[0].data = [totalRun, totalDown];
             charts.util.update();
-
-            const lines = [...new Set(data.map(r => r.line))].sort();
-            charts.eff.data.labels = lines;
-            const effVals = lines.map(l => { 
-                const rs = data.filter(x => x.line === l); 
-                const a = rs.reduce((s,x)=>s+x.actual,0); 
-                const t = rs.reduce((s,x)=>s+x.target,0); 
-                return t > 0 ? (a/t*100) : 0; 
-            });
-            charts.eff.data.datasets[0].data = effVals;
-            charts.eff.data.datasets[0].backgroundColor = effVals.map(e => e < 65 ? '#ef4444' : (e < 80 ? '#f59e0b' : '#10b981'));
-            charts.eff.update();
-
-            const reasons = {}; data.forEach(r => { if(r.down > 0 && r.reason !== "Normal") reasons[r.reason] = (reasons[r.reason] || 0) + r.down; });
-            charts.pareto.data.labels = Object.keys(reasons);
-            charts.pareto.data.datasets[0].data = Object.values(reasons);
-            charts.pareto.update();
         }
 
         function toggleMenu() { 
@@ -353,9 +299,7 @@
             document.querySelector('.menu-overlay').style.display = document.getElementById('system-menu').classList.contains('active') ? 'block' : 'none';
         }
         function toggleTheme() { document.body.classList.toggle('light-mode'); }
-        function setPeriod(p, btn) { period = p; document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); processAndRender(); }
         async function deleteLog(id) { if(confirm("Delete?")) await sb.from('production_logs').delete().eq('id', id); }
-        function exportCSV() { alert("Exporting..."); }
         setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleString(); }, 1000);
     </script>
 </body>
