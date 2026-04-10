@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bodyline Pro | v12.0 Abrupt-Sync</title>
+    <title>Bodyline Pro | v12.1 Production Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -41,32 +41,38 @@
         .btn-primary { background: var(--accent); color: white; width: 100%; }
 
         table { width: 100%; border-collapse: collapse; font-size: 11px; }
-        th { text-align: left; padding: 8px; border-bottom: 1px solid var(--border); color: var(--text-dim); }
+        th { text-align: left; padding: 8px; border-bottom: 1px solid var(--border); color: var(--text-dim); text-transform: uppercase; }
         td { padding: 8px; border-bottom: 1px solid var(--border); }
         .admin-only { display: none; }
 
         .chat-container { height: 250px; overflow-y: auto; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-bottom: 10px; font-size: 12px; display: flex; flex-direction: column; gap: 8px; scroll-behavior: smooth;}
-        .chat-msg { padding: 8px; border-radius: 6px; background: rgba(255,255,255,0.02); border-left: 3px solid var(--accent); position: relative; animation: slideIn 0.2s ease-out; }
-        @keyframes slideIn { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
+        .chat-msg { padding: 8px; border-radius: 6px; background: rgba(255,255,255,0.02); border-left: 3px solid var(--accent); position: relative; }
+        .chat-msg.admin-msg { border-left-color: var(--warning); background: rgba(245, 158, 11, 0.05); }
         .del-msg-btn { position: absolute; right: 5px; top: 5px; background: none; border: none; color: var(--danger); cursor: pointer; font-size: 10px; }
 
         .fab { position: fixed; bottom: 20px; left: 20px; width: 45px; height: 45px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1000; color: white; font-size: 24px; border: 2px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         #system-menu { position: fixed; top: 0; right: -400px; width: 350px; height: 100%; background: var(--surface); border-left: 2px solid var(--accent); z-index: 2001; transition: 0.4s; padding: 25px; box-sizing: border-box; visibility: hidden; overflow-y: auto;}
         #system-menu.active { right: 0; visibility: visible; }
         .menu-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; display: none; }
+
+        @media print {
+            .fab, .cloud-status, .menu-overlay, #system-menu, .chat-panel, .admin-only, #admin-form-container { display: none !important; }
+            body { background: white; color: black; }
+            .panel { border: 1px solid #ddd; break-inside: avoid; }
+        }
     </style>
 </head>
 <body class="light-mode">
 
     <div class="cloud-status">
         <div id="cloud-dot" class="status-dot dot-offline"></div>
-        <span id="cloud-text">OFFLINE</span>
+        <span id="cloud-text">CONNECTING...</span>
     </div>
 
     <div id="portal-overlay">
         <div class="auth-card">
             <h2 style="margin:0; color:var(--accent)">BODYLINE LOGIN</h2>
-            <p style="font-size: 12px; color:var(--text-dim)">v12.0 Abrupt-Sync Edition</p>
+            <p style="font-size: 12px; color:var(--text-dim)">v12.1 Reporting Edition</p>
             <input type="password" id="access-code" placeholder="PIN CODE">
             <button class="btn btn-primary" id="login-btn" onclick="authorize()" style="padding: 15px; font-size: 16px;">SECURE LOGIN</button>
         </div>
@@ -95,7 +101,7 @@
 
         <div class="chart-row admin-only" id="admin-form-container">
             <div class="panel" id="admin-form">
-                <h3 style="margin:0 0 10px 0; color:var(--accent); font-size: 14px;">Abrupt Data Entry</h3>
+                <h3 style="margin:0 0 10px 0; color:var(--accent); font-size: 14px;">Data Acquisition</h3>
                 <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
                     <input type="date" id="f-date">
                     <select id="f-shift"><option>Day Shift</option><option>Night Shift</option></select>
@@ -106,26 +112,26 @@
                     <input type="number" id="f-run" placeholder="RunTime" value="480">
                     <input type="number" id="f-down" placeholder="DownTime">
                 </div>
-                <button class="btn btn-primary" id="transmit-btn" onclick="saveData()" style="margin-top:10px;">TRANSMIT TO CLOUD</button>
+                <button class="btn btn-primary" id="transmit-btn" onclick="saveData()" style="margin-top:10px;">TRANSMIT RECORD</button>
             </div>
         </div>
 
         <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px;">
             <div class="panel">
                 <h3 style="margin:0 0 10px 0;">Live Master Log</h3>
-                <div style="overflow-y:auto; height: 300px;">
+                <div style="overflow-y:auto; height: 350px;">
                     <table id="log-table">
-                        <thead><tr><th>Date</th><th>Line</th><th>Actual</th><th>Eff%</th><th>Down</th><th class="admin-only">X</th></tr></thead>
+                        <thead><tr><th>Date</th><th>Line</th><th>Actual</th><th>Eff%</th><th>Down</th><th class="admin-only">Action</th></tr></thead>
                         <tbody id="log-body"></tbody>
                     </table>
                 </div>
             </div>
 
-            <div class="panel">
-                <h3 style="margin:0 0 10px 0; color: var(--accent);">💬 Instant Team Comms</h3>
+            <div class="panel chat-panel">
+                <h3 style="margin:0 0 10px 0; color: var(--accent);">💬 Team Comms</h3>
                 <div id="chat-box" class="chat-container"></div>
                 <div style="display: flex; gap: 5px;">
-                    <input type="text" id="chat-input" placeholder="Type a message..." style="margin:0;" onkeypress="if(event.key === 'Enter') sendComment()">
+                    <input type="text" id="chat-input" placeholder="Message..." style="margin:0;" onkeypress="if(event.key === 'Enter') sendComment()">
                     <button class="btn btn-primary" onclick="sendComment()" style="width: auto;">SEND</button>
                 </div>
             </div>
@@ -136,13 +142,16 @@
     <div class="menu-overlay" onclick="toggleMenu()"></div>
 
     <div id="system-menu">
-        <h3 style="color: var(--accent);">System Settings</h3>
-        <button class="btn" style="width:100%; margin-bottom:10px;" onclick="toggleTheme()">🌓 Toggle Dark/Light</button>
+        <h3 style="color: var(--accent);">System Menu</h3>
+        <button class="btn" style="width:100%; margin-bottom:10px; background: var(--border); color: var(--text);" onclick="toggleTheme()">🌓 Toggle Dark/Light</button>
+        <button class="btn" style="width:100%; margin-bottom:10px; background: var(--success); color: white;" onclick="exportCSV()">📊 Export to Excel (.csv)</button>
+        <button class="btn" style="width:100%; margin-bottom:20px; background: var(--accent); color: white;" onclick="window.print()">🖨️ Print to PDF</button>
+        
         <div id="admin-monitor-section" style="display:none;">
             <h4 style="color:var(--warning); margin: 10px 0;">🔒 Security: Access Logs</h4>
-            <div id="access-log-display" style="font-family:monospace; font-size:10px; height:250px; overflow-y:auto; background:rgba(0,0,0,0.1); padding:10px;"></div>
+            <div id="access-log-display" style="font-family:monospace; font-size:10px; height:200px; overflow-y:auto; background:rgba(0,0,0,0.1); padding:10px;"></div>
         </div>
-        <button class="btn btn-primary" style="margin-top:20px" onclick="toggleMenu()">Close</button>
+        <button class="btn btn-primary" style="margin-top:20px" onclick="toggleMenu()">Close Menu</button>
     </div>
 
     <script>
@@ -158,7 +167,7 @@
         async function authorize() {
             const pin = document.getElementById('access-code').value.trim(); 
             const btn = document.getElementById('login-btn');
-            btn.innerText = "OPENING SECURE PORTAL...";
+            btn.innerText = "AUTHENTICATING...";
 
             try {
                 const { data } = await sb.from('user_roles').select('*').eq('pin', pin).single();
@@ -168,10 +177,11 @@
                     document.getElementById('user-display').innerText = currentUser;
                     
                     if(isEngineer) {
-                        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
+                        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'table-cell');
+                        document.getElementById('admin-form-container').style.display = 'block';
                         document.getElementById('admin-monitor-section').style.display = 'block';
                     } else {
-                        if(document.getElementById('admin-form-container')) document.getElementById('admin-form-container').style.display = 'none';
+                        document.getElementById('admin-form-container').style.display = 'none';
                     }
                     
                     document.getElementById('portal-overlay').style.display = 'none';
@@ -180,25 +190,25 @@
                     fetchComments(); 
                     setupRealtime(); 
                     recordAccess(currentUser);
-                } else { alert("Access Denied."); }
-            } catch (err) { alert("Database Connection Error."); }
+                } else { alert("Incorrect PIN."); }
+            } catch (err) { alert("Database error."); }
             btn.innerText = "SECURE LOGIN";
         }
 
         function setupRealtime() {
-            sb.channel('db-sync')
+            sb.channel('global-sync')
               .on('postgres_changes', { event: '*', schema: 'public', table: 'production_logs' }, () => fetchData())
               .on('postgres_changes', { event: '*', schema: 'public', table: 'live_comments' }, () => fetchComments())
               .on('postgres_changes', { event: '*', schema: 'public', table: 'access_logs' }, () => { if(isEngineer) fetchAccessLogs(); })
               .subscribe();
 
             document.getElementById('cloud-dot').className = "status-dot dot-online";
-            document.getElementById('cloud-text').innerText = "ONLINE (LIVE SYNC)";
+            document.getElementById('cloud-text').innerText = "LIVE SYNC ACTIVE";
         }
 
         async function fetchData() {
             const { data } = await sb.from('production_logs').select('*').order('created_at', {ascending:false}).limit(200);
-            if(data) { rawCloudData = data; processAndRender(); }
+            if(data) { rawCloudData = data; renderTable(data); updateKPIs(data); updateCharts(data); }
         }
 
         async function fetchComments() {
@@ -224,24 +234,12 @@
             const input = document.getElementById('chat-input');
             const msg = input.value.trim();
             if(!msg) return;
-            
-            // ABRUPT INJECTION: Put it on the screen immediately before the database even responds
-            const box = document.getElementById('chat-box');
-            box.innerHTML += `<div class="chat-msg" style="opacity: 0.5;"> <small>Sending...</small> <span>${msg}</span></div>`;
-            box.scrollTop = box.scrollHeight;
-
             input.value = '';
             await sb.from('live_comments').insert([{ user_name: currentUser, message: msg }]);
         }
 
         async function deleteComment(id) { await sb.from('live_comments').delete().eq('id', id); }
         async function recordAccess(user) { await sb.from('access_logs').insert([{ user_name: user }]); }
-
-        function processAndRender() {
-            renderTable(rawCloudData);
-            updateKPIs(rawCloudData);
-            updateCharts(rawCloudData);
-        }
 
         async function saveData() {
             const btn = document.getElementById('transmit-btn');
@@ -255,17 +253,25 @@
             };
             const { error } = await sb.from('production_logs').insert([entry]);
             if(!error) {
-                await fetchData(); // Abrupt refresh
+                await fetchData(); 
                 btn.innerText = "SUCCESS!";
-                setTimeout(() => { btn.innerText = "TRANSMIT TO CLOUD"; }, 2000);
-            } else { btn.innerText = "ERROR!"; }
+                setTimeout(() => { btn.innerText = "TRANSMIT RECORD"; }, 2000);
+            }
         }
 
         function renderTable(data) {
-            document.getElementById('log-body').innerHTML = data.slice(0, 20).map(r => {
+            document.getElementById('log-body').innerHTML = data.slice(0, 30).map(r => {
                 const eff = r.target > 0 ? ((r.actual/r.target)*100).toFixed(1) : 0;
-                return `<tr><td>${r.date}</td><td>${r.line}</td><td>${r.actual}</td><td>${eff}%</td><td>${r.down}m</td><td class="admin-only"><button onclick="deleteLog(${r.id})" style="background:none; border:none; color:var(--danger); cursor:pointer;">🗑</button></td></tr>`;
+                let delIcon = isEngineer ? `<button onclick="deleteLog(${r.id})" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:16px;">🗑</button>` : "";
+                return `<tr><td>${r.date}</td><td>${r.line}</td><td>${r.actual}</td><td>${eff}%</td><td>${r.down}m</td><td class="admin-only">${delIcon}</td></tr>`;
             }).join('');
+        }
+
+        async function deleteLog(id) {
+            if(confirm("Confirm: Delete this entry from Master Log?")) {
+                await sb.from('production_logs').delete().eq('id', id);
+                await fetchData();
+            }
         }
 
         function updateKPIs(data) {
@@ -294,12 +300,21 @@
             charts.util.update();
         }
 
+        function exportCSV() {
+            let csv = "Date,Shift,Line,Target,Actual,Down(min),Reason\n";
+            rawCloudData.forEach(r => {
+                csv += `${r.date},${r.shift},${r.line},${r.target},${r.actual},${r.down},${r.reason}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = 'Bodyline_Report.csv'; a.click();
+        }
+
         function toggleMenu() { 
             document.getElementById('system-menu').classList.toggle('active'); 
             document.querySelector('.menu-overlay').style.display = document.getElementById('system-menu').classList.contains('active') ? 'block' : 'none';
         }
         function toggleTheme() { document.body.classList.toggle('light-mode'); }
-        async function deleteLog(id) { if(confirm("Delete?")) await sb.from('production_logs').delete().eq('id', id); }
         setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleString(); }, 1000);
     </script>
 </body>
