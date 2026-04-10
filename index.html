@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bodyline Pro | Cloud Sync HMI v9.1</title>
+    <title>Bodyline Pro | Cloud Sync HMI v9.2</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -95,7 +95,7 @@
     <div id="portal-overlay">
         <div class="auth-card">
             <h2 style="margin:0; color:var(--accent)">BODYLINE LOGIN</h2>
-            <p style="font-size: 12px; color:var(--text-dim)">v9.1 Dashboard Sync</p>
+            <p style="font-size: 12px; color:var(--text-dim)">v9.2 Dashboard Sync</p>
             <input type="password" id="access-code" placeholder="PIN CODE">
             <button class="btn btn-primary" onclick="authorize()" style="padding: 15px; font-size: 16px;">ENTER</button>
         </div>
@@ -122,7 +122,7 @@
             <div class="kpi-card" id="card-yield"><small>Total Yield</small><div id="kpi-yield" style="font-size:22px; font-weight:bold;">0</div></div>
             <div class="kpi-card" id="card-eff"><small>Avg Efficiency</small><div id="kpi-eff" style="font-size:22px; font-weight:bold;">0%</div></div>
             <div class="kpi-card" id="card-quality"><small>OEE Quality</small><div id="kpi-quality" style="font-size:22px; font-weight:bold;">0%</div></div>
-            <div class="kpi-card" id="card-down"><small>Total Downtime</small><div id="kpi-down" style="font-size:22px; font-weight:bold;">0m</div></div>
+            <div class="kpi-card" id="card-down"><small>Total Downtime</small><div id="kpi-down" style="font-size:22px; font-weight:bold;">0 min.</div></div>
         </div>
 
         <div class="chart-row">
@@ -153,12 +153,22 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                     <input type="date" id="f-date">
                     <select id="f-shift"><option>Day Shift</option><option>Night Shift</option></select>
+                    
                     <select id="f-line"><option>Line 1</option><option>Line 2</option><option>Line 3</option><option>Line 4</option><option>Line 5</option><option>Line 6</option></select>
                     <select id="f-reason"><option>Normal</option><option>Mechanical</option><option>Electrical</option><option>Material</option><option>QC</option><option>No Operation</option></select>
+                    
                     <input type="number" id="f-target" placeholder="Target">
                     <input type="number" id="f-actual" placeholder="Actual">
-                    <input type="number" id="f-rejects" placeholder="Rejects" value="0">
-                    <input type="number" id="f-down" placeholder="Down(m)" value="0">
+                    
+                    <select id="f-run-category">
+                        <option>Regular Time</option>
+                        <option>Overtime</option>
+                        <option>Holiday / Weekend</option>
+                    </select>
+                    <input type="number" id="f-run" placeholder="Run Time (min.)" value="480">
+                    
+                    <input type="number" step="any" id="f-rejects" placeholder="Rejects (kg.)">
+                    <input type="number" id="f-down" placeholder="Downtime (min.)">
                 </div>
                 <textarea id="f-comment" placeholder="Jamming details or troubleshooting notes..." rows="2"></textarea>
                 <button class="btn btn-primary" onclick="saveData()" style="margin-top:5px; padding:12px;">TRANSMIT RECORD</button>
@@ -169,7 +179,7 @@
                 <div style="overflow-x:auto;">
                     <table id="log-table">
                         <thead>
-                            <tr><th>Date</th><th>Shift</th><th>Line</th><th>Actual</th><th>Eff%</th><th>Down</th><th>Comments</th><th class="admin-only">Action</th></tr>
+                            <tr><th>Date</th><th>Shift</th><th>Line</th><th>Actual</th><th>Rejects</th><th>Eff%</th><th>Down</th><th>Comments</th><th class="admin-only">Action</th></tr>
                         </thead>
                         <tbody id="log-body"></tbody>
                     </table>
@@ -229,18 +239,15 @@
                 if(user.admin) {
                     isEngineer = true;
                     document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
-                    // Style admin panel grid to span across properly
                     document.getElementById('admin-form').style.gridColumn = "span 1";
                 } else {
                     document.getElementById('delay-status').style.display = 'inline';
-                    // Make table full width for viewers
                     document.querySelector('.panel:last-child').style.gridColumn = "span 2";
                 }
                 
                 document.getElementById('portal-overlay').style.display = 'none';
                 
                 recordGlobalAccess(currentUser);
-
                 initCharts();
                 fetchData();
                 setupRealtime();
@@ -249,17 +256,13 @@
             } else { alert("Invalid PIN. Please try again."); }
         }
 
-        // --- GLOBAL ACCESS LOGGING ---
         async function recordGlobalAccess(name) {
             const timeStr = new Date().toLocaleString();
-            
-            // 1. Always save locally as a backup
             let localLogs = JSON.parse(localStorage.getItem('bl_access_history')) || [];
             localLogs.unshift(`[${timeStr}] ${name} accessed dashboard.`);
             localStorage.setItem('bl_access_history', JSON.stringify(localLogs.slice(0, 50)));
 
-            // 2. Try to save to Supabase
-            const { error } = await sb.from('access_logs').insert([{ user_name: name }]);
+            await sb.from('access_logs').insert([{ user_name: name }]);
             if(isEngineer) fetchGlobalLogs();
         }
 
@@ -268,7 +271,6 @@
             const display = document.getElementById('access-log-display');
             
             if(error) {
-                // If the table isn't created in Supabase yet, show the local fallback gracefully
                 let localLogs = JSON.parse(localStorage.getItem('bl_access_history')) || [];
                 display.innerHTML = `<div style="color:var(--warning); margin-bottom:10px;">⚠️ Cloud Table 'access_logs' not found. Showing local history:</div>` + 
                                     localLogs.map(l => `<div style="border-bottom: 1px solid #444; padding: 4px 0;">${l}</div>`).join('');
@@ -280,7 +282,6 @@
             }
         }
 
-        // --- REALTIME STATUS ---
         function setupRealtime() {
             sb.from('production_logs').select('id').limit(1).then(({ error }) => {
                 const dot = document.getElementById('cloud-dot');
@@ -332,7 +333,9 @@
                 line: document.getElementById('f-line').value,
                 target: parseInt(document.getElementById('f-target').value) || 0,
                 actual: parseInt(document.getElementById('f-actual').value) || 0,
-                rejects: parseInt(document.getElementById('f-rejects').value) || 0,
+                run_category: document.getElementById('f-run-category').value,
+                run: parseInt(document.getElementById('f-run').value) || 0,
+                rejects: parseFloat(document.getElementById('f-rejects').value) || 0,
                 down: parseInt(document.getElementById('f-down').value) || 0,
                 reason: document.getElementById('f-reason').value,
                 comment: document.getElementById('f-comment').value,
@@ -347,11 +350,13 @@
             const { error } = await sb.from('production_logs').insert([entry]);
             
             if(error) {
-                alert("DATABASE ERROR: " + error.message + "\n\n(Please check your Supabase table columns!)");
+                alert("DATABASE ERROR: " + error.message);
                 btn.innerText = "TRANSMIT RECORD";
             } else {
+                // Clear the boxes that change often
                 document.getElementById('f-actual').value = '';
-                document.getElementById('f-down').value = '0';
+                document.getElementById('f-down').value = '';
+                document.getElementById('f-rejects').value = '';
                 document.getElementById('f-comment').value = '';
                 btn.innerText = "TRANSMIT RECORD";
                 fetchData(); 
@@ -361,7 +366,7 @@
         function triggerAndon() {
             const banner = document.getElementById('andon-banner');
             banner.style.display = 'block';
-            setTimeout(() => { banner.style.display = 'none'; }, 8000); // Hide after 8 seconds
+            setTimeout(() => { banner.style.display = 'none'; }, 8000);
         }
 
         function setPeriod(p, btn) {
@@ -393,15 +398,15 @@
             body.innerHTML = data.slice(0, 20).map(r => {
                 const eff = r.target > 0 ? ((r.actual/r.target)*100).toFixed(1) : 0;
                 
-                // STRICT COLOR RULES (Red < 65, Yellow 65-79, Green 80+)
                 let effColor = 'var(--success)';
                 if (eff < 65) effColor = 'var(--danger)';
                 else if (eff < 80) effColor = 'var(--warning)';
 
                 return `<tr>
                     <td>${r.date}</td><td>${r.shift}</td><td>${r.line}</td><td>${r.actual}</td>
+                    <td style="color:var(--text-dim)">${r.rejects || 0} kg.</td>
                     <td style="color:${effColor}; font-weight:bold">${eff}%</td>
-                    <td style="color:${r.down > 30 ? 'var(--danger)' : 'inherit'}">${r.down}m</td>
+                    <td style="color:${r.down > 30 ? 'var(--danger)' : 'inherit'}">${r.down || 0} min.</td>
                     <td style="font-style:italic; font-size:10px; opacity:0.8">${r.comment || ''}</td>
                     <td class="admin-only" style="display:${isEngineer ? 'table-cell' : 'none'}">
                         <button onclick="deleteRow(${r.id})" style="color:var(--danger); border:none; background:none; cursor:pointer">🗑</button>
@@ -421,7 +426,7 @@
             document.getElementById('kpi-yield').innerText = t.a.toLocaleString();
             document.getElementById('kpi-eff').innerText = effVal.toFixed(1) + '%';
             document.getElementById('kpi-quality').innerText = (t.a > 0 ? ((t.a - t.rej)/t.a*100) : 100).toFixed(1) + '%';
-            document.getElementById('kpi-down').innerText = t.d + 'm';
+            document.getElementById('kpi-down').innerText = t.d + ' min.';
 
             document.getElementById('card-eff').className = `kpi-card ${cardColor}`;
         }
@@ -433,11 +438,10 @@
                 type: 'line', data: { labels: [], datasets: [{ label: 'Actual', borderColor: '#0ea5e9', data: [] }, { label: 'Target', borderColor: '#8b5cf6', data: [], borderDash: [5,5] }]}, options: cfg
             });
             
-            // UTILIZATION CHART RESTORED
             charts.util = new Chart(document.getElementById('utilChart'), {
                 type: 'bar', data: { labels: [], datasets: [
-                    { label: 'Run Time (m)', backgroundColor: '#10b981', data: [] },
-                    { label: 'Down Time (m)', backgroundColor: '#ef4444', data: [] }
+                    { label: 'Run Time (min.)', backgroundColor: '#10b981', data: [] },
+                    { label: 'Down Time (min.)', backgroundColor: '#ef4444', data: [] }
                 ]}, options: cfg
             });
 
@@ -455,19 +459,16 @@
             const plotData = [...data].reverse().slice(-10);
             const labels = plotData.map(r => (r.date ? r.date.slice(5) : '') + " " + (r.shift === 'Day Shift' ? 'D' : 'N'));
             
-            // 1. Prod Line Chart
             charts.prod.data.labels = labels;
             charts.prod.data.datasets[0].data = plotData.map(r => r.actual);
             charts.prod.data.datasets[1].data = plotData.map(r => r.target);
             charts.prod.update();
 
-            // 2. Utilization Chart
             charts.util.data.labels = labels;
             charts.util.data.datasets[0].data = plotData.map(r => r.run);
             charts.util.data.datasets[1].data = plotData.map(r => r.down);
             charts.util.update();
 
-            // 3. Efficiency Chart (WITH CORRECTED COLORS)
             const lines = [...new Set(data.map(r => r.line))].sort();
             charts.eff.data.labels = lines;
             const effValues = lines.map(l => {
@@ -478,15 +479,13 @@
             });
             charts.eff.data.datasets[0].data = effValues;
             
-            // Map strictly to specific colors
             charts.eff.data.datasets[0].backgroundColor = effValues.map(e => {
-                if (e < 65) return '#ef4444'; // Red
-                if (e < 80) return '#f59e0b'; // Yellow
-                return '#10b981'; // Green
+                if (e < 65) return '#ef4444'; 
+                if (e < 80) return '#f59e0b'; 
+                return '#10b981'; 
             });
             charts.eff.update();
 
-            // 4. Pareto Chart
             const reasons = {};
             data.forEach(r => { if(r.down > 0 && r.reason !== "Normal") reasons[r.reason] = (reasons[r.reason] || 0) + r.down; });
             charts.pareto.data.labels = Object.keys(reasons);
