@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bodyline Pro | Enterprise v11.7</title>
+    <title>Bodyline Pro | Enterprise v11.8 - Instant Sync</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -17,9 +17,6 @@
             --text: #0f172a; --text-dim: #64748b; --border: #e2e8f0;
         }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; transition: 0.3s; overflow-x: hidden; }
-
-        #andon-banner { display: none; background: var(--danger); color: white; text-align: center; padding: 12px; font-weight: 900; letter-spacing: 3px; font-size: 14px; animation: blinker 1s linear infinite; position: sticky; top: 0; z-index: 6000; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.5); }
-        @keyframes blinker { 50% { opacity: 0.7; background: #b91c1c; } }
 
         .cloud-status { position: fixed; top: 10px; right: 10px; font-size: 11px; display: flex; align-items: center; gap: 8px; background: var(--surface); padding: 6px 12px; border-radius: 20px; z-index: 5000; border: 1px solid var(--border); font-weight: bold; }
         .status-dot { width: 10px; height: 10px; border-radius: 50%; }
@@ -58,7 +55,7 @@
         .chat-msg.admin-msg { border-left-color: var(--warning); background: rgba(245, 158, 11, 0.05); }
         .del-msg-btn { position: absolute; right: 5px; top: 5px; background: none; border: none; color: var(--danger); cursor: pointer; font-size: 10px; }
 
-        /* GEAR ICON LOWER LEFT */
+        /* FAB LOWER LEFT */
         .fab { position: fixed; bottom: 20px; left: 20px; width: 45px; height: 45px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1000; color: white; font-size: 24px; border: 2px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         #system-menu { position: fixed; top: 0; right: -400px; width: 350px; height: 100%; background: var(--surface); border-left: 2px solid var(--accent); z-index: 2001; transition: 0.4s; padding: 25px; box-sizing: border-box; visibility: hidden; overflow-y: auto;}
         #system-menu.active { right: 0; visibility: visible; }
@@ -66,8 +63,6 @@
     </style>
 </head>
 <body class="light-mode">
-
-    <div id="andon-banner">🚨 CRITICAL ALERT: PERFORMANCE DROP 🚨</div>
 
     <div class="cloud-status">
         <div id="cloud-dot" class="status-dot dot-offline"></div>
@@ -77,7 +72,7 @@
     <div id="portal-overlay">
         <div class="auth-card">
             <h2 style="margin:0; color:var(--accent)">BODYLINE LOGIN</h2>
-            <p style="font-size: 12px; color:var(--text-dim)">v11.7 No-Compromise Sync</p>
+            <p style="font-size: 12px; color:var(--text-dim)">v11.8 Instant Sync Edition</p>
             <input type="password" id="access-code" placeholder="PIN CODE">
             <button class="btn btn-primary" id="login-btn" onclick="authorize()" style="padding: 15px; font-size: 16px;">SECURE LOGIN</button>
         </div>
@@ -87,7 +82,6 @@
         <h1 style="margin:0; letter-spacing: 2px; font-size: 24px;">BODYLINE PRODUCTION</h1>
         <div style="display: flex; justify-content: center; gap: 15px; margin-top: 5px; font-size: 11px;">
             <span id="user-display" style="font-weight: bold; color: var(--accent);">Viewer Mode</span>
-            <span id="delay-status" style="color: var(--warning); display: none;">(Live - 2m Delay Active)</span>
             <span id="live-clock" style="font-family: monospace;"></span>
         </div>
     </div>
@@ -119,7 +113,7 @@
 
         <div class="chart-row admin-only" id="admin-form-container">
             <div class="panel" id="admin-form">
-                <h3 style="margin:0 0 10px 0; color:var(--accent); font-size: 14px;">Data Acquisition</h3>
+                <h3 style="margin:0 0 10px 0; color:var(--accent); font-size: 14px;">Data Entry (ADMIN)</h3>
                 <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
                     <input type="date" id="f-date">
                     <select id="f-shift"><option>Day Shift</option><option>Night Shift</option></select>
@@ -131,13 +125,13 @@
                     <input type="number" id="f-down" placeholder="DownTime">
                 </div>
                 <textarea id="f-comment" placeholder="Details..."></textarea>
-                <button class="btn btn-primary" onclick="saveData()" style="margin-top:10px;">TRANSMIT RECORD</button>
+                <button class="btn btn-primary" onclick="saveData()" style="margin-top:10px;">TRANSMIT (INSTANT SYNC)</button>
             </div>
         </div>
 
         <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px;">
             <div class="panel">
-                <h3 style="margin:0 0 10px 0;">Database Master Log</h3>
+                <h3 style="margin:0 0 10px 0;">Live Database Log</h3>
                 <div style="overflow-y:auto; height: 300px;">
                     <table id="log-table">
                         <thead><tr><th>Date</th><th>Line</th><th>Actual</th><th>Eff%</th><th>Down</th><th class="admin-only">X</th></tr></thead>
@@ -147,7 +141,7 @@
             </div>
 
             <div class="panel">
-                <h3 style="margin:0 0 10px 0; color: var(--accent);">💬 Team Comms</h3>
+                <h3 style="margin:0 0 10px 0; color: var(--accent);">💬 Instant Comms</h3>
                 <div id="chat-box" class="chat-container"></div>
                 <div style="display: flex; gap: 5px;">
                     <input type="text" id="chat-input" placeholder="Message..." style="margin:0;" onkeypress="if(event.key === 'Enter') sendComment()">
@@ -164,8 +158,12 @@
         <h3 style="color: var(--accent);">Settings</h3>
         <button class="btn" style="width:100%; margin-bottom:10px;" onclick="toggleTheme()">🌓 Toggle Theme</button>
         <button class="btn" style="width:100%; margin-bottom:20px;" onclick="exportCSV()">📊 Export Excel</button>
-        <h4 style="color:var(--warning); margin: 10px 0;">🔒 Access History</h4>
-        <div id="access-log-display" style="font-family:monospace; font-size:10px; height:250px; overflow-y:auto; background:rgba(0,0,0,0.1); padding:10px;"></div>
+        
+        <div id="admin-monitor-section" style="display:none;">
+            <h4 style="color:var(--warning); margin: 10px 0;">🔒 Security: Access Logs</h4>
+            <div id="access-log-display" style="font-family:monospace; font-size:10px; height:250px; overflow-y:auto; background:rgba(0,0,0,0.1); padding:10px;"></div>
+        </div>
+        
         <button class="btn btn-primary" style="margin-top:20px" onclick="toggleMenu()">Close</button>
     </div>
 
@@ -183,41 +181,43 @@
         async function authorize() {
             const pin = document.getElementById('access-code').value.trim(); 
             const btn = document.getElementById('login-btn');
-            btn.innerText = "AUTHENTICATING...";
+            btn.innerText = "OPENING SECURE CHANNEL...";
 
             try {
                 const { data } = await sb.from('user_roles').select('*').eq('pin', pin).single();
                 if(data || pin === "122022") {
-                    currentUser = data ? data.user_name : "Admin";
+                    currentUser = data ? data.user_name : "Engr. Pinapit";
                     isEngineer = data ? (data.role === 'Admin') : true;
                     document.getElementById('user-display').innerText = currentUser;
-                    if(isEngineer) document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
-                    else {
-                        document.getElementById('delay-status').style.display = 'inline';
+                    
+                    if(isEngineer) {
+                        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
+                        document.getElementById('admin-monitor-section').style.display = 'block';
+                    } else {
                         if(document.getElementById('admin-form-container')) document.getElementById('admin-form-container').style.display = 'none';
                     }
+                    
                     document.getElementById('portal-overlay').style.display = 'none';
                     initCharts();
                     fetchData();
                     fetchComments(); 
-                    setupRealtime(); // THE TRUE LIVE SYNC
+                    setupRealtime(); 
                     recordAccess(currentUser);
-                    setInterval(processAndRender, 10000); 
                 } else { alert("Invalid PIN."); }
-            } catch (err) { alert("Error connecting to database."); }
+            } catch (err) { alert("Secure login failed."); }
             btn.innerText = "SECURE LOGIN";
         }
 
         function setupRealtime() {
-            // FIX: This listener now catches everything immediately
-            sb.channel('global-sync')
+            // THE INSTANT LISTENER - NO DELAY
+            sb.channel('live-link')
               .on('postgres_changes', { event: '*', schema: 'public', table: 'production_logs' }, () => fetchData())
               .on('postgres_changes', { event: '*', schema: 'public', table: 'live_comments' }, () => fetchComments())
-              .on('postgres_changes', { event: '*', schema: 'public', table: 'access_logs' }, () => fetchAccessLogs())
+              .on('postgres_changes', { event: '*', schema: 'public', table: 'access_logs' }, () => { if(isEngineer) fetchAccessLogs(); })
               .subscribe();
 
             document.getElementById('cloud-dot').className = "status-dot dot-online";
-            document.getElementById('cloud-text').innerText = "100% LIVE SYNC ACTIVE";
+            document.getElementById('cloud-text').innerText = "INSTANT SYNC ACTIVE";
         }
 
         async function fetchData() {
@@ -230,7 +230,7 @@
             const box = document.getElementById('chat-box');
             if (data) {
                 box.innerHTML = data.map(c => {
-                    const isAdmin = c.user_name.includes("Admin") || c.user_name.includes("Engr.");
+                    const isAdmin = c.user_name.includes("Engr.");
                     let del = (isEngineer || c.user_name === currentUser) ? `<button class="del-msg-btn" onclick="deleteComment('${c.id}')">✖</button>` : "";
                     return `<div class="chat-msg ${isAdmin?'admin-msg':''}"> ${del} <small>${c.user_name}:</small> <span>${c.message}</span></div>`;
                 }).join('');
@@ -239,7 +239,7 @@
         }
 
         async function fetchAccessLogs() {
-            const { data } = await sb.from('access_logs').select('*').order('created_at', {ascending:false}).limit(20);
+            const { data } = await sb.from('access_logs').select('*').order('created_at', {ascending:false}).limit(50);
             const display = document.getElementById('access-log-display');
             if(data) display.innerHTML = data.map(l => `<div>[${new Date(l.created_at).toLocaleTimeString()}] ${l.user_name}</div>`).join('');
         }
@@ -257,8 +257,8 @@
 
         function processAndRender() {
             const now = new Date();
-            const filtered = isEngineer ? rawCloudData : rawCloudData.filter(r => (now - new Date(r.created_at)) > 120000);
-            const final = filtered.filter(r => {
+            // ABRUPT SYNC LOGIC: If you are the editor, 0 delay. Viewers see as fast as internet uploads.
+            const final = rawCloudData.filter(r => {
                 const d = new Date(r.date);
                 if(period === 'daily') return d.toDateString() === now.toDateString();
                 if(period === 'weekly') return (now - d) / 86400000 <= 7;
@@ -270,6 +270,8 @@
         }
 
         async function saveData() {
+            const btn = document.querySelector('.btn-primary');
+            btn.innerText = "UPLOADING TO CLOUD...";
             const entry = {
                 date: document.getElementById('f-date').value || new Date().toISOString().split('T')[0],
                 shift: document.getElementById('f-shift').value, line: document.getElementById('f-line').value,
@@ -280,6 +282,8 @@
             };
             await sb.from('production_logs').insert([entry]);
             document.getElementById('f-actual').value = ''; document.getElementById('f-down').value = '';
+            btn.innerText = "TRANSMIT (INSTANT SYNC)";
+            // Dash will auto-update because of setupRealtime()
         }
 
         function renderTable(data) {
@@ -336,11 +340,15 @@
             charts.pareto.update();
         }
 
-        function toggleMenu() { document.getElementById('system-menu').classList.toggle('active'); document.querySelector('.menu-overlay').style.display = document.getElementById('system-menu').classList.contains('active') ? 'block' : 'none'; }
+        function toggleMenu() { 
+            document.getElementById('system-menu').classList.toggle('active'); 
+            document.querySelector('.menu-overlay').style.display = document.getElementById('system-menu').classList.contains('active') ? 'block' : 'none';
+            if(isEngineer && document.getElementById('system-menu').classList.contains('active')) fetchAccessLogs();
+        }
         function toggleTheme() { document.body.classList.toggle('light-mode'); }
         function setPeriod(p, btn) { period = p; document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); processAndRender(); }
         async function deleteLog(id) { if(confirm("Delete?")) await sb.from('production_logs').delete().eq('id', id); }
-        function exportCSV() { alert("Exporting CSV..."); }
+        function exportCSV() { alert("Exporting..."); }
         setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleString(); }, 1000);
     </script>
 </body>
