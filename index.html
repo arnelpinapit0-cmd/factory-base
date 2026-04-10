@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bodyline Pro | Enterprise Edition v11.2</title>
+    <title>Bodyline Pro | Enterprise Edition v11.3</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -99,7 +99,7 @@
     <div id="portal-overlay">
         <div class="auth-card">
             <h2 style="margin:0; color:var(--accent)">BODYLINE LOGIN</h2>
-            <p style="font-size: 12px; color:var(--text-dim)">v11.2 Enterprise Comms</p>
+            <p style="font-size: 12px; color:var(--text-dim)">v11.3 Enterprise Fix</p>
             <input type="password" id="access-code" placeholder="PIN CODE">
             <button class="btn btn-primary" id="login-btn" onclick="authorize()" style="padding: 15px; font-size: 16px;">SECURE LOGIN</button>
         </div>
@@ -151,7 +151,7 @@
             </div>
         </div>
 
-        <div class="chart-row">
+        <div class="chart-row" id="admin-form-container">
             <div class="panel admin-only" id="admin-form">
                 <h3 style="margin:0 0 10px 0; color:var(--accent); font-size: 14px;">Data Acquisition Form</h3>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
@@ -234,9 +234,8 @@
         Chart.defaults.color = '#94a3b8';
         Chart.defaults.font.family = 'Inter';
 
-        // --- BULLETPROOF LOGIN LOGIC ---
+        // --- BULLETPROOF LOGIN LOGIC (FIXED FOR VIEWERS) ---
         async function authorize() {
-            // Added .trim() to catch accidental invisible spaces typed after the PIN
             const pin = document.getElementById('access-code').value.trim(); 
             const btn = document.getElementById('login-btn');
             btn.innerText = "AUTHENTICATING...";
@@ -254,7 +253,12 @@
                         document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
                     } else {
                         document.getElementById('delay-status').style.display = 'inline';
-                        document.querySelector('.chart-row:last-of-type').style.display = "none";
+                        
+                        // FIX: Safely hide the admin form container for Viewers without crashing!
+                        const adminForm = document.getElementById('admin-form');
+                        if(adminForm && adminForm.parentElement) {
+                            adminForm.parentElement.style.display = "none";
+                        }
                     }
                     
                     document.getElementById('portal-overlay').style.display = 'none';
@@ -280,8 +284,8 @@
                     }
                 }
             } catch (err) {
-                console.error(err);
-                alert("Connection Error. Could not verify PIN. Please check your internet connection.");
+                console.error("Dashboard Crash Log:", err);
+                alert("System Error: " + err.message); 
             }
             btn.innerText = "SECURE LOGIN";
         }
@@ -311,7 +315,6 @@
                     const msgClass = isAdmin ? "chat-msg admin-msg" : "chat-msg";
                     const nameColor = isAdmin ? "var(--warning)" : "var(--accent)";
                     
-                    // Logic to show delete button (Admins see it for all, Viewers see it for their own)
                     let deleteBtnHTML = "";
                     if (isEngineer || c.user_name === currentUser) {
                         deleteBtnHTML = `<button class="del-msg-btn" onclick="deleteComment('${c.id}')" title="Delete message">✖</button>`;
@@ -331,7 +334,7 @@
         async function deleteComment(id) {
             if(confirm("Delete this message?")) {
                 await sb.from('live_comments').delete().eq('id', id);
-                fetchComments(); // Pull updated list instantly
+                fetchComments(); 
             }
         }
 
